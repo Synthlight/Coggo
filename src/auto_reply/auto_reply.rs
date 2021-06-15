@@ -2,8 +2,10 @@
 // Doesn't work right with fancy-regex either.
 const DISABLE_QUOTE_LOOKAHEAD: bool = true;
 
-// ( [^ \\n]+?)?        Match a single word (optional).
-// [^\\.\\n]*         Matches everything except period & newline.
+// ( [^ \\n]+?)             Match a single word.
+// ([^\\.\\n]*)             Matches everything except period & newline.
+// ( (?!only)[^ \\n]+?)     Match any single word except `only`.
+// (Don't forget the `\n` in `[^ \n]` else it actually matches past newlines.)
 
 const CONSOLE_PART1: &str = "(will|game|to|available)";
 const CONSOLE_PART2: &str = "(console|xbox|ps4|ps5|playstation)";
@@ -30,12 +32,13 @@ lazy_static! {
     static ref STEAM_AUTOREPLY_REGEX: Regex = {
         create_auto_reply_regex(&[
             format!("when(('|’)s|s| is)?( {})? (come|coming) out", THE_GAME_REGEX),
-            format!("is( {}) (out|released|available)( yet)?", THE_GAME_REGEX),
-            format!("(where|how) (can|do).*?(get|buy|play) .*?{}", THE_GAME_REGEX),
+            format!("is {} (out|released|available)( yet)?", THE_GAME_REGEX),
+            format!("is {} (up|available) (yet|to download)?", THE_GAME_REGEX),
+            format!("(where|how) (can|do|does)( [^ \\n]+?)? (get|buy|play) (this|it|{} {})", THE_GAME_PART1, THE_GAME_PART2),
             format!("(where|how).*?download"),
             format!("(is|if|will)( [^ \\n]+?)? {}( (?!only)[^ \\n]+?)? (free|on steam)", THE_GAME_REGEX),
-            format!("what.*?(get|buy|is) .*?{}?( [^ \\n]+?)? on( |\\?|\\.)", THE_GAME_REGEX),
-            format!("how much .*?{}? cost", THE_GAME_REGEX),
+            format!("what.*?(get|buy|is)( [^ \\n]+?)? {}.*? on[^a-zA-Z]", THE_GAME_PART2),
+            format!("how mu(t?)ch .*?{}? cost", THE_GAME_REGEX),
             format!("how (much|many)( [^ \\n]+?)? is {}", THE_GAME_REGEX),
             format!("can i play( [^ \\n]+?)?( {})? now", THE_GAME_REGEX),
             format!("price in (usd|dollars|aud|cad)")
@@ -97,7 +100,7 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
     // Auto-reply for "multiplayer". (For Volcanoids, only run in #new-tunnelers, #discussion & #ask-the-community.)
     if is_on_debug_server || (should_run_on_volcanoids && (channel_id == &NEW_TUNNELERS || channel_id == &DISCUSSION || channel_id == &ASK_THE_COMMUNITY)) {
         if MULTIPLAYER_AUTOREPLY_REGEX.is_match(&msg.content).unwrap() {
-            create_auto_reply(&info, formatcp!("Yes! Volcanoids is multiplayer. See the <#{}> for details.", ASK_THE_COMMUNITY), true).await;
+            create_auto_reply(&info, formatcp!("Yes! Volcanoids is multiplayer. See the <#{}> for details.", FAQ), true).await;
         }
     }
 }
