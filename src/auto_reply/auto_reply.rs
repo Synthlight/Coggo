@@ -73,9 +73,20 @@ struct Info<'a> {
 async fn auto_reply(ctx: &Context, msg: &Message) {
     setup_emoji(ctx).await;
 
+    if !should_run_on_target_server(msg) {
+        return;
+    }
+
     let guild = msg.guild_id.unwrap();
     let guild_id = guild.as_u64();
     let channel_id = msg.channel_id.as_u64();
+
+    if msg.content == "Is it on console?" && channel_id == &SECRET_SECTOR {
+        msg.channel_id.say(ctx, "No it is not, stop asking.").await.expect("Error sending message.");
+        return;
+    } else if channel_id == &SECRET_SECTOR {
+        return;
+    }
 
     let info = Info {
         ctx,
@@ -98,7 +109,7 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
     }
 
     // Auto-reply for "multiplayer". (For Volcanoids, only run in #new-tunnelers, #discussion & #ask-the-community.)
-    if is_on_debug_server || (should_run_on_volcanoids && (channel_id == &NEW_TUNNELERS || channel_id == &DISCUSSION || channel_id == &ASK_THE_COMMUNITY)) {
+    if is_on_debug_server || (should_run_on_volcanoids && (channel_id == &NEW_TUNNELERS || channel_id == &DISCUSSION || channel_id == &ASK_THE_COMMUNITY || channel_id == &ADMIN_BOT_CHAT)) {
         if MULTIPLAYER_AUTOREPLY_REGEX.is_match(&msg.content).unwrap() {
             create_auto_reply(&info, formatcp!("Yes! Volcanoids is multiplayer. See the <#{}> for details.", FAQ), true).await;
         }

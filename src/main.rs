@@ -25,6 +25,8 @@ const NEW_TUNNELERS: u64 = 463721722638499850;
 const DISCUSSION: u64 = 445199967540346881;
 const ASK_THE_COMMUNITY: u64 = 494576341849735188;
 const DISCUSS_OTHER_GAMES: u64 = 496325967883534337;
+const SECRET_SECTOR: u64 = 500781638075154468;
+const ADMIN_BOT_CHAT: u64 = 523288694514515969;
 
 // Coggo-Testing
 const THUMBS_UP_ID_TESTING: u64 = 853850623576768578;
@@ -45,10 +47,10 @@ static mut THUMBS_DOWN_TESTING: Option<Emoji> = None;
 static mut THUMBS_DOWN_COG_HAND: Option<Emoji> = None;
 static mut THUMBS_DOWN_SHOTGUN: Option<Emoji> = None;
 
-mod lib;
+include!["lib/lib.rs"];
 
 #[group]
-#[commands(verify, new_player_info)]
+#[commands(verify, new_player_info, no)]
 struct General;
 
 struct Handler;
@@ -78,7 +80,11 @@ async fn main() {
 }
 
 #[hook]
-async fn before_hook(ctx: &Context, _: &Message, cmd_name: &str) -> bool {
+async fn before_hook(ctx: &Context, msg: &Message, cmd_name: &str) -> bool {
+    if !should_run_on_target_server(msg) {
+        return false;
+    }
+
     println!("Running command {}.", cmd_name);
 
     setup_emoji(ctx).await;
@@ -111,4 +117,5 @@ async fn after_hook(_: &Context, _: &Message, cmd_name: &str, error: Result<(), 
 
 include!["auto_reply/auto_reply.rs"];
 include!["bot_commands/newplayerinfo.rs"];
+include!["bot_commands/no.rs"];
 include!["bot_commands/verify.rs"];
