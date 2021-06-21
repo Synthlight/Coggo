@@ -1,4 +1,6 @@
 use std::env;
+use std::str::FromStr;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use async_std::task::sleep;
@@ -13,7 +15,7 @@ use serenity::model::channel::{Message, ReactionType};
 use serenity::model::guild::Emoji;
 use serenity::model::id::{ChannelId, EmojiId, GuildId};
 
-const DEBUG: bool = true;
+static DEBUG: AtomicBool = AtomicBool::new(true);
 
 const COGGO_TESTING: u64 = 853358073964265512;
 const VOLCANOIDS: u64 = 444244464903651348;
@@ -60,6 +62,14 @@ impl EventHandler for Handler {}
 
 #[tokio::main]
 async fn main() {
+    let debug_str = env::var("coggo_debug").unwrap_or("true".to_string());
+    let is_debug = bool::from_str(&debug_str).expect("Error parsing `coggo_debug` value. Must be true/false.");
+    DEBUG.store(is_debug, Ordering::Relaxed);
+
+    if is_debug {
+        println!("Debug mode enabled.");
+    }
+
     let framework = StandardFramework::new()
         .configure(|c| c.prefix("."))
         .group(&GENERAL_GROUP)

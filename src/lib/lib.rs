@@ -14,6 +14,6 @@ pub fn should_run_on_target_server(msg: &Message) -> bool {
     let guild = msg.guild_id.unwrap();
     let guild_id = guild.as_u64();
 
-    return !DEBUG && guild_id == &VOLCANOIDS
-        || (DEBUG && (guild_id == &COGGO_TESTING || guild_id == &CAPS_SUB));
+    return !DEBUG.load(Ordering::Relaxed) && guild_id == &VOLCANOIDS
+        || (DEBUG.load(Ordering::Relaxed) && (guild_id == &COGGO_TESTING || guild_id == &CAPS_SUB));
 }

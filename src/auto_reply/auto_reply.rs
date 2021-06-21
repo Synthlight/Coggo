@@ -95,8 +95,8 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         thumbs_down: &get_thumbs_down(guild_id),
     };
 
-    let is_on_debug_server = DEBUG && (guild_id == &COGGO_TESTING || guild_id == &CAPS_SUB);
-    let should_run_on_volcanoids = !DEBUG && guild_id == &VOLCANOIDS;
+    let is_on_debug_server = DEBUG.load(Ordering::Relaxed) && (guild_id == &COGGO_TESTING || guild_id == &CAPS_SUB);
+    let should_run_on_volcanoids = !DEBUG.load(Ordering::Relaxed) && guild_id == &VOLCANOIDS;
 
     // Auto-reply for "console" & "steam". (For Volcanoids, ignore #discuss-other-games.)
     if is_on_debug_server || (should_run_on_volcanoids && channel_id != &DISCUSS_OTHER_GAMES) {
@@ -117,7 +117,7 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
 }
 
 async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq_msg_in_response: bool) {
-    let mut response = String::from(text);
+    let mut response = text.to_string();
     if include_check_faq_msg_in_response == true {
         response += &format!("\n\nIf you have any other questions, make sure to read the <#{}>, your question might be already answered there.", FAQ);
     }
@@ -166,7 +166,7 @@ fn create_auto_reply_regex(individual_lines_to_match: &[String], ignore_quoted_t
     let mut regex_str = String::new();
 
     for (index, line) in individual_lines_to_match.iter().enumerate() {
-        let mut to_match = String::from(line);
+        let mut to_match = line.to_string();
         if index > 0 {
             regex_str += "|";
         }
@@ -177,7 +177,7 @@ fn create_auto_reply_regex(individual_lines_to_match: &[String], ignore_quoted_t
         regex_str += &format!("({})", to_match);
     }
 
-    if DEBUG {
+    if DEBUG.load(Ordering::Relaxed) {
         println!("Made regex: {}", regex_str);
     }
 
