@@ -1,6 +1,6 @@
 #[command("uptime")]
 async fn uptime(ctx: &Context, msg: &Message) -> CommandResult {
-    let time_diff = Local::now() - START_TIME.clone();
+    let time_diff = Local::now() - START_TIME.read().unwrap().clone();
     let days = time_diff.num_days() % 24;
     let hours = time_diff.num_hours() % 60;
     let minutes = time_diff.num_minutes() % 60;

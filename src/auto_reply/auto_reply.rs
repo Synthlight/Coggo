@@ -10,74 +10,53 @@ const DISABLE_QUOTE_LOOKAHEAD: bool = true;
 const CONSOLE_PART1: &str = "(will|game|to|available)";
 const CONSOLE_PART2: &str = "(console|xbox|ps4|ps5|playstation)";
 
-lazy_static! {
-    static ref CONSOLE_AUTOREPLY_REGEX: Regex = {
-        create_auto_reply_regex(&[
-            format!("{}.*{}", CONSOLE_PART1, CONSOLE_PART2),
-            format!("{}.*{}", CONSOLE_PART2, CONSOLE_PART1)
-        ], true)
-    };
-}
+static CONSOLE_AUTO_REPLY_REGEX: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
+    format!("{}.*{}", CONSOLE_PART1, CONSOLE_PART2),
+    format!("{}.*{}", CONSOLE_PART2, CONSOLE_PART1)
+], true)));
 
 // A var since I keep copying the "the game", "it", "this", etc in many of these.
-const THE_GAME_PART1: &str = "(that|the|this)"; // The 'the' part of 'the game'. The group of words that match the first part.
-
-const THE_GAME_PART2: &str = "(game|it|volcanoid(s?))"; // The 'game' part of 'the game'. The group of words that match the last part.
+const THE_GAME_PART1: &str = "(that|the|this)";
+const THE_GAME_PART2: &str = "(game|it|volcanoid(s?))";
 
 // Merge so we either match: The first part, the second part, or both parts.
 // e.g. we match: 'the', 'game', or 'the game'.
 const THE_GAME_REGEX: &str = formatcp!("({the}|{game}|{the} {game})", the = THE_GAME_PART1, game = THE_GAME_PART2);
 
-lazy_static! {
-    static ref STEAM_AUTOREPLY_REGEX: Regex = {
-        create_auto_reply_regex(&[
-            format!("when(('|’)s|s| is)?( {})? (come|coming) out", THE_GAME_REGEX),
-            format!("is {} (out|released|available)( yet)?", THE_GAME_REGEX),
-            format!("is {} (up|available) (yet|to download)?", THE_GAME_REGEX),
-            format!("(where|how) (can|do|does)( [^ \\n]+?)? (get|buy|play) (this|it|{} {})", THE_GAME_PART1, THE_GAME_PART2),
-            format!("(where|how).*?download"),
-            format!("(is|if|will)( [^ \\n]+?)? {}( (?!only)[^ \\n]+?)? (free|on steam)", THE_GAME_REGEX),
-            format!("what.*?(get|buy|is)( [^ \\n]+?)? {}.*? on[^a-zA-Z]", THE_GAME_PART2),
-            format!("how mu(t?)ch .*?{}? cost", THE_GAME_REGEX),
-            format!("how (much|many)( [^ \\n]+?)? is {}", THE_GAME_REGEX),
-            format!("can i play( [^ \\n]+?)?( {})? now", THE_GAME_REGEX),
-            format!("price in (usd|dollars|aud|cad)")
-        ], true)
-    };
-}
+static STEAM_AUTO_REPLY_REGEX: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
+    format!("when(('|’)s|s| is)?( {})? (come|coming) out", THE_GAME_REGEX),
+    format!("is {} (out|released|available)( yet)?", THE_GAME_REGEX),
+    format!("is {} (up|available) (yet|to download)?", THE_GAME_REGEX),
+    format!("(where|how) (can|do|does)( [^ \\n]+?)? (get|buy|play) (this|it|{} {})", THE_GAME_PART1, THE_GAME_PART2),
+    format!("(where|how).*?download"),
+    format!("(is|if|will)( [^ \\n]+?)? {}( (?!only)[^ \\n]+?)? (free|on steam)", THE_GAME_REGEX),
+    format!("what.*?(get|buy|is)( [^ \\n]+?)? {}.*? on[^a-zA-Z]", THE_GAME_PART2),
+    format!("how mu(t?)ch .*?{}? cost", THE_GAME_REGEX),
+    format!("how (much|many)( [^ \\n]+?)? is {}", THE_GAME_REGEX),
+    format!("can i play( [^ \\n]+?)?( {})? now", THE_GAME_REGEX),
+    format!("price in (usd|dollars|aud|cad)")
+], true)));
 
 const MULTIPLAYER_NAMES: &str = "(coop|co-op|multiplayer|multi player|multi-player)";
 
-lazy_static! {
-    static ref MULTIPLAYER_AUTOREPLY_REGEX: Regex = {
-        create_auto_reply_regex(&[
-            format!("is {} {}", THE_GAME_REGEX, MULTIPLAYER_NAMES),
-            format!("is there {}", MULTIPLAYER_NAMES),
-            format!("does {}.*{}", THE_GAME_REGEX, MULTIPLAYER_NAMES),
-            format!("{} .* (is )?{}\\?", THE_GAME_REGEX, MULTIPLAYER_NAMES),
-            format!("is {} a thing", MULTIPLAYER_NAMES),
-            format!("{} is {}.*?\\?", THE_GAME_REGEX, MULTIPLAYER_NAMES),
-            format!("you should[^\\.\\n]*(add|make)[^\\.\\n]*{}", MULTIPLAYER_NAMES)
-        ], true)
-    };
-}
+static MULTIPLAYER_AUTO_REPLY_REGEX: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
+    format!("is {} {}", THE_GAME_REGEX, MULTIPLAYER_NAMES),
+    format!("is there {}", MULTIPLAYER_NAMES),
+    format!("does {}.*{}", THE_GAME_REGEX, MULTIPLAYER_NAMES),
+    format!("{} .* (is )?{}\\?", THE_GAME_REGEX, MULTIPLAYER_NAMES),
+    format!("is {} a thing", MULTIPLAYER_NAMES),
+    format!("{} is {}.*?\\?", THE_GAME_REGEX, MULTIPLAYER_NAMES),
+    format!("you should[^\\.\\n]*(add|make)[^\\.\\n]*{}", MULTIPLAYER_NAMES)
+], true)));
 
-lazy_static! {
-    static ref STEAM_SCAM: Regex = {
-        create_auto_reply_regex(&[
-            format!("\\/t[a-zA-Z]+?r\\/new\\/"),
-            format!("\\/new\\/\\?partner=")
-        ], true)
-    };
-}
+static STEAM_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
+    format!("\\/t[a-zA-Z]+?r\\/new\\/"),
+    format!("\\/new\\/\\?partner=")
+], true)));
 
-lazy_static! {
-    static ref STEAM_SCAM_IGNORE: Regex = {
-        create_auto_reply_regex(&[
-            format!("https?:\\/\\/(?:www\\.)?steamcommunity.com")
-        ], true)
-    };
-}
+static STEAM_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
+    format!("https?:\\/\\/(?:www\\.)?steamcommunity.com")
+], true)));
 
 struct Info<'a> {
     ctx: &'a Context,
@@ -88,8 +67,6 @@ struct Info<'a> {
 
 #[hook]
 async fn auto_reply(ctx: &Context, msg: &Message) {
-    setup_emoji(ctx).await;
-
     if !should_run_on_target_server(msg) {
         return;
     }
@@ -105,11 +82,14 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         return;
     }
 
+    let thumbs_up = EMOJI.lock().await.get_thumbs_up(guild_id);
+    let thumbs_down = EMOJI.lock().await.get_thumbs_down(guild_id);
+
     let info = Info {
         ctx,
         channel_id: &msg.channel_id,
-        thumbs_up: &get_thumbs_up(guild_id),
-        thumbs_down: &get_thumbs_down(guild_id),
+        thumbs_up: &thumbs_up,
+        thumbs_down: &thumbs_down,
     };
 
     let is_on_debug_server = DEBUG.load(Ordering::Relaxed) && (guild_id == &COGGO_TESTING || guild_id == &CAPS_SUB);
@@ -117,23 +97,23 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
 
     // Auto-reply for "console" & "steam". (For Volcanoids, ignore #discuss-other-games.)
     if is_on_debug_server || (should_run_on_volcanoids && channel_id != &DISCUSS_OTHER_GAMES) {
-        if CONSOLE_AUTOREPLY_REGEX.is_match(&msg.content).unwrap() {
+        if CONSOLE_AUTO_REPLY_REGEX.read().unwrap().is_match(&msg.content).unwrap() {
             create_auto_reply(&info, "**Volcanoids**? On **consoles**? Yes sir! But so far the main priority is adding more content before they dive into all the console shenanigans. That Rich guy will keep you updated!", true).await;
         }
-        if STEAM_AUTOREPLY_REGEX.is_match(&msg.content).unwrap() {
+        if STEAM_AUTO_REPLY_REGEX.read().unwrap().is_match(&msg.content).unwrap() {
             create_auto_reply(&info, "You can get Volcanoids on Steam here: https://store.steampowered.com/app/951440/Volcanoids?utm_source=discord&utm_medium=autoreply", true).await;
         }
     }
 
     // Auto-reply for "multiplayer". (For Volcanoids, only run in #new-tunnelers, #discussion & #ask-the-community.)
     if is_on_debug_server || (should_run_on_volcanoids && (channel_id == &NEW_TUNNELERS || channel_id == &DISCUSSION || channel_id == &ASK_THE_COMMUNITY || channel_id == &ADMIN_BOT_CHAT_VOLC)) {
-        if MULTIPLAYER_AUTOREPLY_REGEX.is_match(&msg.content).unwrap() {
+        if MULTIPLAYER_AUTO_REPLY_REGEX.read().unwrap().is_match(&msg.content).unwrap() {
             create_auto_reply(&info, formatcp!("Yes! Volcanoids is multiplayer. See the <#{}> for details.", FAQ), true).await;
         }
     }
 
     if is_on_debug_server || should_run_on_volcanoids {
-        if STEAM_SCAM.is_match(&msg.content).unwrap() && !STEAM_SCAM_IGNORE.is_match(&msg.content).unwrap() {
+        if STEAM_SCAM.read().unwrap().is_match(&msg.content).unwrap() && !STEAM_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap() {
             quarantine_message(&info, msg).await;
         }
     }
@@ -231,32 +211,4 @@ fn create_auto_reply_regex(individual_lines_to_match: &[String], ignore_quoted_t
         //.multi_line(true) // `m`
         .build()
         .unwrap();
-}
-
-fn get_thumbs_up(guild_id: &u64) -> Emoji {
-    unsafe {
-        if guild_id == &COGGO_TESTING {
-            return THUMBS_UP_TESTING.clone().unwrap();
-        } else if guild_id == &CAPS_SUB {
-            return THUMBS_UP_KAPPA.clone().unwrap();
-        } else if guild_id == &VOLCANOIDS {
-            return THUMBS_UP_COG_HAND.clone().unwrap();
-        } else {
-            panic!("No DEBUG emoji found.");
-        }
-    }
-}
-
-fn get_thumbs_down(guild_id: &u64) -> Emoji {
-    unsafe {
-        if guild_id == &COGGO_TESTING {
-            return THUMBS_DOWN_TESTING.clone().unwrap();
-        } else if guild_id == &CAPS_SUB {
-            return THUMBS_DOWN_SHOTGUN.clone().unwrap();
-        } else if guild_id == &VOLCANOIDS {
-            return THUMBS_DOWN_COG_HAND.clone().unwrap();
-        } else {
-            panic!("No DEBUG emoji found.");
-        }
-    }
 }
