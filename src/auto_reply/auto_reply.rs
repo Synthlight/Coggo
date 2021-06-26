@@ -60,6 +60,7 @@ static STEAM_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_
 
 struct Info<'a> {
     ctx: &'a Context,
+    msg: &'a Message,
     channel_id: &'a ChannelId,
     thumbs_up: &'a Emoji,
     thumbs_down: &'a Emoji,
@@ -87,6 +88,7 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
 
     let info = Info {
         ctx,
+        msg,
         channel_id: &msg.channel_id,
         thumbs_up: &thumbs_up,
         thumbs_down: &thumbs_down,
@@ -120,6 +122,8 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
 }
 
 async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq_msg_in_response: bool) {
+    println!("User {} triggered auto-reply: {}", info.msg.author.id, text);
+
     let mut response = text.to_string();
     if include_check_faq_msg_in_response == true {
         response += &format!("\n\nIf you have any other questions, make sure to read the <#{}>, your question might be already answered there.", FAQ);
