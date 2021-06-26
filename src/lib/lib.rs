@@ -1,13 +1,4 @@
-// pub async fn delete_self(ctx: &Context, msg: &Message) -> bool {
-//     if let Err(why) = msg.delete(ctx).await {
-//         println!("Error deleting message '{:?}'.", why);
-//         return false;
-//     };
-//
-//     return true;
-// }
-
-pub fn should_run_on_target_server(msg: &Message) -> bool {
+fn should_run_on_target_server(msg: &Message) -> bool {
     if msg.guild_id.is_none() {
         return false;
     }

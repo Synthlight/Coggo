@@ -4,6 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use async_std::task::sleep;
+use chrono::{DateTime, Local};
 use const_format::formatcp;
 use fancy_regex::{Regex, RegexBuilder};
 use lazy_static::lazy_static;
@@ -17,6 +18,10 @@ use serenity::model::id::{ChannelId, EmojiId, GuildId};
 
 static DEBUG: AtomicBool = AtomicBool::new(true);
 
+lazy_static! {
+    static ref START_TIME: DateTime<Local> = Local::now();
+}
+
 const COGGO_TESTING: u64 = 853358073964265512;
 const VOLCANOIDS: u64 = 444244464903651348;
 const CAPS_SUB: u64 = 488708757304639520;
@@ -28,7 +33,8 @@ const DISCUSSION: u64 = 445199967540346881;
 const ASK_THE_COMMUNITY: u64 = 494576341849735188;
 const DISCUSS_OTHER_GAMES: u64 = 496325967883534337;
 const SECRET_SECTOR: u64 = 500781638075154468;
-const ADMIN_BOT_CHAT: u64 = 523288694514515969;
+const ADMIN_BOT_CHAT_TEST: u64 = 853362826047520768;
+const ADMIN_BOT_CHAT_VOLC: u64 = 523288694514515969;
 
 // Coggo-Testing
 const THUMBS_UP_ID_TESTING: u64 = 853850623576768578;
@@ -52,7 +58,7 @@ static mut THUMBS_DOWN_SHOTGUN: Option<Emoji> = None;
 include!["lib/lib.rs"];
 
 #[group]
-#[commands(verify, new_player_info, no)]
+#[commands(how_to_paint, new_player_info, no, uptime, verify)]
 struct General;
 
 struct Handler;
@@ -65,6 +71,8 @@ async fn main() {
     let debug_str = env::var("coggo_debug").unwrap_or("true".to_string());
     let is_debug = bool::from_str(&debug_str).expect("Error parsing `coggo_debug` value. Must be true/false.");
     DEBUG.store(is_debug, Ordering::Relaxed);
+
+    println!("Start time: {}", START_TIME.format("%Y-%m-%d -- %H:%M:%S"));
 
     if is_debug {
         println!("Debug mode enabled.");
@@ -126,6 +134,8 @@ async fn after_hook(_: &Context, _: &Message, cmd_name: &str, error: Result<(), 
 }
 
 include!["auto_reply/auto_reply.rs"];
+include!["bot_commands/howtopaint.rs"];
 include!["bot_commands/newplayerinfo.rs"];
 include!["bot_commands/no.rs"];
+include!["bot_commands/uptime.rs"];
 include!["bot_commands/verify.rs"];
