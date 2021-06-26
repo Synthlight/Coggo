@@ -62,7 +62,8 @@ async fn main() {
     }
 
     let framework = StandardFramework::new()
-        .configure(|c| c.prefix("."))
+        .configure(|c| c.prefix(".")
+            .allow_dm(false))
         .group(&GENERAL_GROUP)
         .normal_message(auto_reply)
         .before(before_hook)
