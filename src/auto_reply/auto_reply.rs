@@ -62,6 +62,23 @@ lazy_static! {
     };
 }
 
+lazy_static! {
+    static ref STEAM_SCAM: Regex = {
+        create_auto_reply_regex(&[
+            format!("\\/t[a-zA-Z]+?r\\/new\\/"),
+            format!("\\/new\\/\\?partner=")
+        ], true)
+    };
+}
+
+lazy_static! {
+    static ref STEAM_SCAM_IGNORE: Regex = {
+        create_auto_reply_regex(&[
+            format!("https?:\\/\\/(?:www\\.)?steamcommunity.com")
+        ], true)
+    };
+}
+
 struct Info<'a> {
     ctx: &'a Context,
     channel_id: &'a ChannelId,
@@ -109,9 +126,15 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
     }
 
     // Auto-reply for "multiplayer". (For Volcanoids, only run in #new-tunnelers, #discussion & #ask-the-community.)
-    if is_on_debug_server || (should_run_on_volcanoids && (channel_id == &NEW_TUNNELERS || channel_id == &DISCUSSION || channel_id == &ASK_THE_COMMUNITY || channel_id == &ADMIN_BOT_CHAT)) {
+    if is_on_debug_server || (should_run_on_volcanoids && (channel_id == &NEW_TUNNELERS || channel_id == &DISCUSSION || channel_id == &ASK_THE_COMMUNITY || channel_id == &ADMIN_BOT_CHAT_VOLC)) {
         if MULTIPLAYER_AUTOREPLY_REGEX.is_match(&msg.content).unwrap() {
             create_auto_reply(&info, formatcp!("Yes! Volcanoids is multiplayer. See the <#{}> for details.", FAQ), true).await;
+        }
+    }
+
+    if is_on_debug_server || should_run_on_volcanoids {
+        if STEAM_SCAM.is_match(&msg.content).unwrap() && !STEAM_SCAM_IGNORE.is_match(&msg.content).unwrap() {
+            quarantine_message(&info, msg).await;
         }
     }
 }
@@ -162,6 +185,27 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
     }
 }
 
+async fn quarantine_message<'a>(info: &'a Info<'a>, msg: &Message) {
+    let guild = msg.guild_id.unwrap();
+    let guild_id = guild.as_u64();
+    let channel_id: u64;
+
+    if guild_id == &COGGO_TESTING {
+        channel_id = ADMIN_BOT_CHAT_TEST
+    } else if guild_id == &VOLCANOIDS {
+        channel_id = ADMIN_BOT_CHAT_VOLC
+    } else {
+        return;
+    }
+
+    let admin_bot_channel = ChannelId::from(channel_id);
+
+    msg.delete(info.ctx).await.expect("Error deleting scam message.");
+
+    let mut report = admin_bot_channel.say(info.ctx, format!("Deleted potential scam message in <#{}> by <@{}>\n{}", msg.channel_id, msg.author.id, msg.content)).await.expect("Error reporting scam message.");
+    report.suppress_embeds(info.ctx).await.expect("Error removing embeds.");
+}
+
 fn create_auto_reply_regex(individual_lines_to_match: &[String], ignore_quoted_text: bool) -> Regex {
     let mut regex_str = String::new();
 
@@ -174,7 +218,7 @@ fn create_auto_reply_regex(individual_lines_to_match: &[String], ignore_quoted_t
         if ignore_quoted_text == true && !DISABLE_QUOTE_LOOKAHEAD {
             to_match += &format!(r"^(?!>).*?{}", to_match);
         }
-        regex_str += &format!("({})", to_match);
+        regex_str += &format!("(?:{})", to_match);
     }
 
     if DEBUG.load(Ordering::Relaxed) {
