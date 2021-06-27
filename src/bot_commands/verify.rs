@@ -1,5 +1,9 @@
 #[command]
 async fn verify(ctx: &Context, msg: &Message) -> CommandResult {
+    if !should_run_on_target_server(msg) {
+        return Ok(());
+    }
+
     msg.channel_id.send_message(ctx, |m| {
         m.content("Try verifying the game files first; here's how:");
         m.embed(|e| {

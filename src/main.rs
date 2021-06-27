@@ -66,7 +66,6 @@ async fn main() {
             .allow_dm(false))
         .group(&GENERAL_GROUP)
         .normal_message(auto_reply)
-        .before(before_hook)
         .after(after_hook);
 
     let mut client = Client::builder(env::var("token").expect("You must pass a token as `token` env var."))
@@ -82,18 +81,9 @@ async fn main() {
 async fn ready(ctx: &Context) {
     EMOJI.lock().await.setup_emoji(&ctx).await;
 
+    prep_regex();
+
     println!("Startup complete.");
-}
-
-#[hook]
-async fn before_hook(_: &Context, msg: &Message, cmd_name: &str) -> bool {
-    if !should_run_on_target_server(msg) {
-        return false;
-    }
-
-    println!("Running command {}.", cmd_name);
-
-    true
 }
 
 #[hook]
