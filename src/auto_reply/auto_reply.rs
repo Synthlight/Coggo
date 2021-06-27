@@ -7,55 +7,55 @@ const DISABLE_QUOTE_LOOKAHEAD: bool = true;
 // ( (?!only)[^ \\n]+?)     Match any single word except `only`.
 // (Don't forget the `\n` in `[^ \n]` else it actually matches past newlines.)
 
-const CONSOLE_PART1: &str = "(will|game|to|available)";
-const CONSOLE_PART2: &str = "(console|xbox|ps4|ps5|playstation)";
+const CONSOLE_PART1: &str = r"(will|game|to|available)";
+const CONSOLE_PART2: &str = r"(console|xbox|ps4|ps5|playstation)";
 
 static CONSOLE_AUTO_REPLY_REGEX: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!("{}.*{}", CONSOLE_PART1, CONSOLE_PART2),
-    format!("{}.*{}", CONSOLE_PART2, CONSOLE_PART1)
+    format!(r"{}.*{}", CONSOLE_PART1, CONSOLE_PART2),
+    format!(r"{}.*{}", CONSOLE_PART2, CONSOLE_PART1)
 ], true)));
 
 // A var since I keep copying the "the game", "it", "this", etc in many of these.
-const THE_GAME_PART1: &str = "(that|the|this)";
-const THE_GAME_PART2: &str = "(game|it|volcanoid(s?))";
+const THE_GAME_PART1: &str = r"(that|the|this)";
+const THE_GAME_PART2: &str = r"(game|it|volcanoid(s?))";
 
 // Merge so we either match: The first part, the second part, or both parts.
 // e.g. we match: 'the', 'game', or 'the game'.
-const THE_GAME_REGEX: &str = formatcp!("({the}|{game}|{the} {game})", the = THE_GAME_PART1, game = THE_GAME_PART2);
+const THE_GAME_REGEX: &str = formatcp!(r"({the}|{game}|{the} {game})", the = THE_GAME_PART1, game = THE_GAME_PART2);
 
 static STEAM_AUTO_REPLY_REGEX: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!("when(('|’)s|s| is)?( {})? (come|coming) out", THE_GAME_REGEX),
-    format!("is {} (out|released|available)( yet)?", THE_GAME_REGEX),
-    format!("is {} (up|available) (yet|to download)?", THE_GAME_REGEX),
-    format!("(where|how) (can|do|does)( [^ \\n]+?)? (get|buy|play) (this|it|{} {})", THE_GAME_PART1, THE_GAME_PART2),
-    format!("(where|how).*?download"),
-    format!("(is|if|will)( [^ \\n]+?)? {}( (?!only)[^ \\n]+?)? (free|on steam)", THE_GAME_REGEX),
-    format!("what.*?(get|buy|is)( [^ \\n]+?)? {}.*? on[^a-zA-Z]", THE_GAME_PART2),
-    format!("how mu(t?)ch .*?{}? cost", THE_GAME_REGEX),
-    format!("how (much|many)( [^ \\n]+?)? is {}", THE_GAME_REGEX),
-    format!("can i play( [^ \\n]+?)?( {})? now", THE_GAME_REGEX),
-    format!("price in (usd|dollars|aud|cad)")
+    format!(r"when(('|’)s|s| is)?( {})? (come|coming) out", THE_GAME_REGEX),
+    format!(r"is {} (out|released|available)( yet)?", THE_GAME_REGEX),
+    format!(r"is {} (up|available) (yet|to download)?", THE_GAME_REGEX),
+    format!(r"(where|how) (can|do|does)( [^ \n]+?)? (get|buy|play) (this|it|{} {})", THE_GAME_PART1, THE_GAME_PART2),
+    format!(r"(where|how).*?download"),
+    format!(r"(is|if|will)( [^ \n]+?)? {}( (?!only)[^ \n]+?)? (free|on steam)", THE_GAME_REGEX),
+    format!(r"what.*?(get|buy|is)( [^ \n]+?)? {}.*? on[^a-zA-Z]", THE_GAME_PART2),
+    format!(r"how mu(t?)ch .*?{}? cost", THE_GAME_REGEX),
+    format!(r"how (much|many)( [^ \n]+?)? is {}", THE_GAME_REGEX),
+    format!(r"can i play( [^ \n]+?)?( {})? now", THE_GAME_REGEX),
+    format!(r"price in (usd|dollars|aud|cad)")
 ], true)));
 
-const MULTIPLAYER_NAMES: &str = "(coop|co-op|multiplayer|multi player|multi-player)";
+const MULTIPLAYER_NAMES: &str = r"(coop|co-op|multiplayer|multi player|multi-player)";
 
 static MULTIPLAYER_AUTO_REPLY_REGEX: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!("is {} {}", THE_GAME_REGEX, MULTIPLAYER_NAMES),
-    format!("is there {}", MULTIPLAYER_NAMES),
-    format!("does {}.*{}", THE_GAME_REGEX, MULTIPLAYER_NAMES),
-    format!("{} .* (is )?{}\\?", THE_GAME_REGEX, MULTIPLAYER_NAMES),
-    format!("is {} a thing", MULTIPLAYER_NAMES),
-    format!("{} is {}.*?\\?", THE_GAME_REGEX, MULTIPLAYER_NAMES),
-    format!("you should[^\\.\\n]*(add|make)[^\\.\\n]*{}", MULTIPLAYER_NAMES)
+    format!(r"is {} {}", THE_GAME_REGEX, MULTIPLAYER_NAMES),
+    format!(r"is there {}", MULTIPLAYER_NAMES),
+    format!(r"does {}.*{}", THE_GAME_REGEX, MULTIPLAYER_NAMES),
+    format!(r"{} .* (is )?{}\?", THE_GAME_REGEX, MULTIPLAYER_NAMES),
+    format!(r"is {} a thing", MULTIPLAYER_NAMES),
+    format!(r"{} is {}.*?\?", THE_GAME_REGEX, MULTIPLAYER_NAMES),
+    format!(r"you should[^\.\n]*(add|make)[^\.\n]*{}", MULTIPLAYER_NAMES)
 ], true)));
 
 static STEAM_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!("\\/t[a-zA-Z]+?r\\/new\\/"),
-    format!("\\/new\\/\\?partner=")
+    format!(r"\/t[tradeof]+?[er]\/new\/\?"),
+    format!(r"\/new\/\?p[partner]+?[er]=")
 ], true)));
 
 static STEAM_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!("https?:\\/\\/(?:www\\.)?steamcommunity.com")
+    format!(r"https?:\/\/(?:www\.)?steamcommunity.com")
 ], true)));
 
 struct Info<'a> {
@@ -215,4 +215,13 @@ fn create_auto_reply_regex(individual_lines_to_match: &[String], ignore_quoted_t
         //.multi_line(true) // `m`
         .build()
         .unwrap();
+}
+
+#[allow(unused)]
+fn prep_regex() {
+    CONSOLE_AUTO_REPLY_REGEX.read().unwrap();
+    STEAM_AUTO_REPLY_REGEX.read().unwrap();
+    MULTIPLAYER_AUTO_REPLY_REGEX.read().unwrap();
+    STEAM_SCAM.read().unwrap();
+    STEAM_SCAM_IGNORE.read().unwrap();
 }
