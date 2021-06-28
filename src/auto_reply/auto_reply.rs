@@ -128,13 +128,25 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
     if include_check_faq_msg_in_response == true {
         response += &format!("\n\nIf you have any other questions, make sure to read the <#{}>, your question might be already answered there.", FAQ);
     }
-    let response_with_react_info = response.clone() + &format!("\n\nThis autoreply is a work in progress feature, did this help you? (react with {}) Or was it misplaced? (react with {}) Thanks for the input!", info.thumbs_up, info.thumbs_down);
+
+    let response_with_react_info: String;
+    let disable_reactions = info.channel_id.as_u64() == &ADMIN_BOT_CHAT_TEST || info.channel_id.as_u64() == &ADMIN_BOT_CHAT_VOLC;
+    if disable_reactions {
+        response_with_react_info = response.clone() + "\n(Reactions disabled for this channel.)";
+    } else {
+        response_with_react_info = response.clone() + &format!("\n\nThis autoreply is a work in progress feature, did this help you? (react with {}) Or was it misplaced? (react with {}) Thanks for the input!", info.thumbs_up, info.thumbs_down);
+    }
 
     let thumbs_up_reaction = ReactionType::from(info.thumbs_up.clone());
     let thumbs_down_reaction = ReactionType::from(info.thumbs_down.clone());
 
     // Create msg & reactions.
     let mut msg = info.channel_id.say(info.ctx, response_with_react_info).await.expect("Error sending auto-reply.");
+
+    if disable_reactions {
+        return;
+    }
+
     msg.react(info.ctx, thumbs_up_reaction.clone()).await.expect("Error adding thumbs up emoji.");
     msg.react(info.ctx, thumbs_down_reaction.clone()).await.expect("Error adding thumbs down emoji.");
 
