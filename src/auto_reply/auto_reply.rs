@@ -143,12 +143,24 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
     let thumbs_down_reaction_copy = thumbs_down_reaction.clone();
     let reaction = msg.await_reaction(info.ctx)
         .filter(move |f| { f.emoji == thumbs_up_reaction_copy || f.emoji == thumbs_down_reaction_copy })
-        .timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(20))
         .await;
 
     // The user didn't respond in time, delete the auto-reply.
     if reaction.is_none() {
-        msg.delete(info.ctx).await.expect("Error deleting auto-reply message.");
+        msg.edit(info.ctx, |m| m.content("You didn't react... I'll leave this note here so I can fix the potential false positive for next time.")).await.expect("Error editing auto-reply message for final note.");
+        msg.delete_reaction_emoji(info.ctx, thumbs_up_reaction.clone()).await.expect("Error deleting auto-reply reactions.");
+        msg.delete_reaction_emoji(info.ctx, thumbs_down_reaction.clone()).await.expect("Error deleting auto-reply reactions.");
+        println!("User {} didn't react in time, removing auto-reply.", info.msg.author.id);
+        return;
+    };
+
+    // The user didn't respond in time, leaving auto-reply note.
+    if reaction.is_none() {
+        msg.edit(info.ctx, |m| m.content("You didn't react... I'll leave this note here so I can fix the potential false positive for next time.")).await.expect("Error editing auto-reply message for final note.");
+        msg.delete_reaction_emoji(info.ctx, thumbs_up_reaction.clone()).await.expect("Error deleting auto-reply reactions.");
+        msg.delete_reaction_emoji(info.ctx, thumbs_down_reaction.clone()).await.expect("Error deleting auto-reply reactions.");
+        println!("User {} didn't react in time, leaving auto-reply note.", info.msg.author.id);
         return;
     };
 
@@ -163,9 +175,9 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
     // ...and then delete it.
     feedback_msg.delete(info.ctx).await.expect("Error deleting thanks for the feedback message.");
 
-    // If the user gave a thumbs down, delete the auto-reply.
+    // If the user gave a thumbs down, leaving auto-reply note.
     if reaction.unwrap().as_inner_ref().emoji == thumbs_down_reaction {
-        msg.delete(info.ctx).await.expect("Error deleting auto-reply message.");
+        msg.edit(info.ctx, |m| m.content("Thanks for the feedback. I'll leave this note here so I can fix the false positive for next time.")).await.expect("Error editing auto-reply message for final note.");
     }
 }
 
@@ -205,9 +217,7 @@ fn create_auto_reply_regex(individual_lines_to_match: &[String], ignore_quoted_t
         regex_str += &format!("(?:{})", to_match);
     }
 
-    if DEBUG.load(Ordering::Relaxed) {
-        println!("Made regex: {}", regex_str);
-    }
+    println!("Made regex: {}", regex_str);
 
     // `(?im)` is used for `fancy-regex`. For `regex`, uncomment the ca
     return RegexBuilder::new(&format!("(?im){}", &regex_str))
