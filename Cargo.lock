@@ -288,6 +288,7 @@ dependencies = [
  "fancy-regex",
  "once_cell",
  "regex",
+ "serde_json",
  "serenity",
  "tokio",
 ]

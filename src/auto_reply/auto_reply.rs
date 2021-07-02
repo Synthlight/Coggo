@@ -72,14 +72,13 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         return;
     }
 
-    let guild = msg.guild_id.unwrap();
-    let guild_id = guild.as_u64();
-    let channel_id = msg.channel_id.as_u64();
+    let guild_id = msg.guild_id.unwrap().0;
+    let channel_id = msg.channel_id.0;
 
-    if msg.content == "Is it on console?" && channel_id == &SECRET_SECTOR {
+    if msg.content == "Is it on console?" && channel_id == SECRET_SECTOR {
         msg.channel_id.say(ctx, "No it is not, stop asking.").await.expect("Error sending message.");
         return;
-    } else if channel_id == &SECRET_SECTOR {
+    } else if channel_id == SECRET_SECTOR {
         return;
     }
 
@@ -94,11 +93,11 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         thumbs_down: &thumbs_down,
     };
 
-    let is_on_debug_server = DEBUG.load(Ordering::Relaxed) && (guild_id == &COGGO_TESTING || guild_id == &CAPS_SUB);
-    let should_run_on_volcanoids = !DEBUG.load(Ordering::Relaxed) && guild_id == &VOLCANOIDS;
+    let is_on_debug_server = DEBUG.load(Ordering::Relaxed) && (guild_id == COGGO_TESTING || guild_id == CAPS_SUB);
+    let should_run_on_volcanoids = !DEBUG.load(Ordering::Relaxed) && guild_id == VOLCANOIDS;
 
     // Auto-reply for "console" & "steam". (For Volcanoids, ignore #discuss-other-games.)
-    if is_on_debug_server || (should_run_on_volcanoids && channel_id != &DISCUSS_OTHER_GAMES) {
+    if is_on_debug_server || (should_run_on_volcanoids && channel_id != DISCUSS_OTHER_GAMES) {
         if CONSOLE_AUTO_REPLY_REGEX.read().unwrap().is_match(&msg.content).unwrap() {
             create_auto_reply(&info, "**Volcanoids**? On **consoles**? Yes sir! But so far the main priority is adding more content before they dive into all the console shenanigans. That Rich guy will keep you updated!", true).await;
         }
@@ -108,7 +107,7 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
     }
 
     // Auto-reply for "multiplayer". (For Volcanoids, only run in #new-tunnelers, #discussion & #ask-the-community.)
-    if is_on_debug_server || (should_run_on_volcanoids && (channel_id == &NEW_TUNNELERS || channel_id == &DISCUSSION || channel_id == &ASK_THE_COMMUNITY || channel_id == &ADMIN_BOT_CHAT_VOLC)) {
+    if is_on_debug_server || (should_run_on_volcanoids && (channel_id == NEW_TUNNELERS || channel_id == DISCUSSION || channel_id == ASK_THE_COMMUNITY || channel_id == ADMIN_BOT_CHAT_VOLC)) {
         if MULTIPLAYER_AUTO_REPLY_REGEX.read().unwrap().is_match(&msg.content).unwrap() {
             create_auto_reply(&info, formatcp!("Yes! Volcanoids is multiplayer. See the <#{}> for details.", FAQ), true).await;
         }
@@ -130,7 +129,7 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
     }
 
     let response_with_react_info: String;
-    let disable_reactions = info.channel_id.as_u64() == &ADMIN_BOT_CHAT_TEST || info.channel_id.as_u64() == &ADMIN_BOT_CHAT_VOLC;
+    let disable_reactions = info.channel_id.0 == ADMIN_BOT_CHAT_TEST || info.channel_id.0 == ADMIN_BOT_CHAT_VOLC;
     if disable_reactions {
         response_with_react_info = response.clone() + "\n(Reactions disabled for this channel.)";
     } else {
@@ -147,8 +146,8 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
         return;
     }
 
-    msg.react(info.ctx, thumbs_up_reaction.clone()).await.expect("Error adding thumbs up emoji.");
-    msg.react(info.ctx, thumbs_down_reaction.clone()).await.expect("Error adding thumbs down emoji.");
+    let thumbs_up = msg.react(info.ctx, thumbs_up_reaction.clone()).await.expect("Error adding thumbs up emoji.");
+    let thumbs_down = msg.react(info.ctx, thumbs_down_reaction.clone()).await.expect("Error adding thumbs down emoji.");
 
     // Wait for the reaction, filtered to match the above two.
     let thumbs_up_reaction_copy = thumbs_up_reaction.clone();
@@ -158,28 +157,37 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
         .timeout(Duration::from_secs(20))
         .await;
 
-    // The user didn't respond in time, delete the auto-reply.
-    if reaction.is_none() {
-        msg.edit(info.ctx, |m| m.content("You didn't react... I'll leave this note here so I can fix the potential false positive for next time.")).await.expect("Error editing auto-reply message for final note.");
-        msg.delete_reaction_emoji(info.ctx, thumbs_up_reaction.clone()).await.expect("Error deleting auto-reply reactions.");
-        msg.delete_reaction_emoji(info.ctx, thumbs_down_reaction.clone()).await.expect("Error deleting auto-reply reactions.");
-        println!("User {} didn't react in time, removing auto-reply.", info.msg.author.id);
-        return;
-    };
+    let mut is_thumbs_up: bool = false;
+    let mut is_thumbs_down: bool = false;
+
+    match reaction {
+        Some(arc_emoji) => {
+            let emoji = &arc_emoji.as_inner_ref().emoji.clone();
+            is_thumbs_up = emoji == &thumbs_up_reaction;
+            is_thumbs_down = emoji == &thumbs_down_reaction;
+        }
+        None => {
+            // Fetch via msg in case the reaction collector missed the emoji.
+            get_thumb_reactions(info, &thumbs_up_reaction, &thumbs_down_reaction, &msg.id, &mut is_thumbs_up, &mut is_thumbs_down).await;
+        }
+    }
+
+    if is_thumbs_up || is_thumbs_down {
+        edit_msg_text(info.ctx, info.msg, &response).await.expect("Error editing auto-reply message.");
+    }
+
+    thumbs_up.delete_all(info.ctx).await.expect("Error deleting auto-reply reactions.");
+    thumbs_down.delete_all(info.ctx).await.expect("Error deleting auto-reply reactions.");
 
     // The user didn't respond in time, leaving auto-reply note.
-    if reaction.is_none() {
-        msg.edit(info.ctx, |m| m.content("You didn't react... I'll leave this note here so I can fix the potential false positive for next time.")).await.expect("Error editing auto-reply message for final note.");
-        msg.delete_reaction_emoji(info.ctx, thumbs_up_reaction.clone()).await.expect("Error deleting auto-reply reactions.");
-        msg.delete_reaction_emoji(info.ctx, thumbs_down_reaction.clone()).await.expect("Error deleting auto-reply reactions.");
+    if !(is_thumbs_up || is_thumbs_down) {
+        msg.edit(info.ctx, |m| m
+            .content("You didn't react... I'll leave this note here so I can fix the potential false positive for next time.")
+            .suppress_embeds(true)).await
+            .expect("Error editing auto-reply message for final note.");
         println!("User {} didn't react in time, leaving auto-reply note.", info.msg.author.id);
         return;
     };
-
-    // The user did respond. Whether positive or negative, edit out the feedback part and remove all reactions.
-    msg.edit(info.ctx, |m| m.content(response)).await.expect("Error editing auto-reply message.");
-    msg.delete_reaction_emoji(info.ctx, thumbs_up_reaction.clone()).await.expect("Error deleting auto-reply reactions.");
-    msg.delete_reaction_emoji(info.ctx, thumbs_down_reaction.clone()).await.expect("Error deleting auto-reply reactions.");
 
     // Leave a thanks for the feedback msg for {n} seconds.
     let feedback_msg = msg.channel_id.say(info.ctx, "Thanks for the feedback").await.expect("Error sending thanks for the feedback message.");
@@ -187,20 +195,36 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
     // ...and then delete it.
     feedback_msg.delete(info.ctx).await.expect("Error deleting thanks for the feedback message.");
 
-    // If the user gave a thumbs down, leaving auto-reply note.
-    if reaction.unwrap().as_inner_ref().emoji == thumbs_down_reaction {
-        msg.edit(info.ctx, |m| m.content("Thanks for the feedback. I'll leave this note here so I can fix the false positive for next time.")).await.expect("Error editing auto-reply message for final note.");
+    // The user gave a thumbs down, leaving auto-reply note.
+    if is_thumbs_down {
+        msg.edit(info.ctx, |m| m
+            .content("Thanks for the feedback. I'll leave this note here so I can fix the false positive for next time.")
+            .suppress_embeds(true)).await
+            .expect("Error editing auto-reply message for final note.");
+    }
+}
+
+async fn get_thumb_reactions<'a>(info: &'a Info<'a>, thumbs_up_reaction: &ReactionType, thumbs_down_reaction: &ReactionType, msg_id: &MessageId, is_thumbs_up: &mut bool, is_thumbs_down: &mut bool) {
+    let msg = info.channel_id.message(info.ctx, MessageId::from(msg_id)).await.unwrap();
+
+    for reaction in &msg.reactions {
+        if &reaction.reaction_type == thumbs_up_reaction && reaction.count > 1 {
+            *is_thumbs_up = true;
+        }
+        if &reaction.reaction_type == thumbs_down_reaction && reaction.count > 1 {
+            *is_thumbs_down = true;
+        }
     }
 }
 
 async fn quarantine_message<'a>(info: &'a Info<'a>, msg: &Message) {
     let guild = msg.guild_id.unwrap();
-    let guild_id = guild.as_u64();
+    let guild_id = guild.0;
     let channel_id: u64;
 
-    if guild_id == &COGGO_TESTING {
+    if guild_id == COGGO_TESTING {
         channel_id = ADMIN_BOT_CHAT_TEST
-    } else if guild_id == &VOLCANOIDS {
+    } else if guild_id == VOLCANOIDS {
         channel_id = ADMIN_BOT_CHAT_VOLC
     } else {
         return;

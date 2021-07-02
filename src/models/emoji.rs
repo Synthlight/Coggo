@@ -34,24 +34,24 @@ impl CachedEmoji {
         }
     }
 
-    fn get_thumbs_up(&self, guild_id: &u64) -> Emoji {
-        if guild_id == &COGGO_TESTING {
+    fn get_thumbs_up(&self, guild_id: u64) -> Emoji {
+        if guild_id == COGGO_TESTING {
             return self.thumbs_up_testing.clone().unwrap();
-        } else if guild_id == &CAPS_SUB {
+        } else if guild_id == CAPS_SUB {
             return self.thumbs_up_kappa.clone().unwrap();
-        } else if guild_id == &VOLCANOIDS {
+        } else if guild_id == VOLCANOIDS {
             return self.thumbs_up_cog_hand.clone().unwrap();
         } else {
             panic!("No DEBUG emoji found.");
         }
     }
 
-    fn get_thumbs_down(&self, guild_id: &u64) -> Emoji {
-        if guild_id == &COGGO_TESTING {
+    fn get_thumbs_down(&self, guild_id: u64) -> Emoji {
+        if guild_id == COGGO_TESTING {
             return self.thumbs_down_testing.clone().unwrap();
-        } else if guild_id == &CAPS_SUB {
+        } else if guild_id == CAPS_SUB {
             return self.thumbs_down_shotgun.clone().unwrap();
-        } else if guild_id == &VOLCANOIDS {
+        } else if guild_id == VOLCANOIDS {
             return self.thumbs_down_cog_hand.clone().unwrap();
         } else {
             panic!("No DEBUG emoji found.");
