@@ -50,7 +50,7 @@ static MULTIPLAYER_AUTO_REPLY_REGEX: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::
 ], true)));
 
 static STEAM_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!(r"\/t[tradeof]+?[er]\/new\/\?"),
+    format!(r"\/t[tradeof]+?[er]\/ne?w\/\?"),
     format!(r"\/new\/\?p[partner]+?[er]=")
 ], true)));
 
