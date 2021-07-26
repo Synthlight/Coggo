@@ -51,7 +51,7 @@ static MULTIPLAYER_AUTO_REPLY_REGEX: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::
 
 static STEAM_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
     format!(r"\/t[tradeof]+?[er]\/ne?w\/\?"),
-    format!(r"\/new\/\?p[partner]+?[er]=")
+    format!(r"\/n[eo]w\/\?p[partner]+?[er]=")
 ], true)));
 
 static STEAM_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
@@ -173,7 +173,7 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
     }
 
     if is_thumbs_up || is_thumbs_down {
-        edit_msg_text(info.ctx, info.msg, &response).await.expect("Error editing auto-reply message.");
+        edit_msg_text(info.ctx, &msg, &response).await.expect("Error editing auto-reply message.");
     }
 
     thumbs_up.delete_all(info.ctx).await.expect("Error deleting auto-reply reactions.");
