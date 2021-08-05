@@ -51,7 +51,10 @@ static MULTIPLAYER_AUTO_REPLY_REGEX: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::
 
 static STEAM_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
     format!(r"\/t[tradeof]+?[er]\/ne?w\/\?"),
-    format!(r"\/n[eo]w\/\?p[partner]+?[er]=")
+    format!(r"\/n[eo]w\/\?p[partner]+?[er]="),
+    format!(r"steam[community]+?\.(?:com|ru)\/t[tradeof]+?[er]\/"),
+    format!(r"https:\/\/i.imgurcom\/r9EWkux.png"),
+    format!(r"https:\/\/i.imgurcom\/SAvJYv5.png")
 ], true)));
 
 static STEAM_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
