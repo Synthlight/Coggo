@@ -66,6 +66,10 @@ static BTLY_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_rep
     format!(r"https:\/\/bit.ly\/([a-z-A-Z0-9]+)")
 ], true)));
 
+static NITRO_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
+    format!(r"Discord Nitro for Free - Steam Store")
+], true)));
+
 struct Info<'a> {
     ctx: &'a Context,
     msg: &'a Message,
@@ -139,6 +143,12 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
             if STEAM_SCAM.read().unwrap().is_match(&actual_url).unwrap() && !STEAM_SCAM_IGNORE.read().unwrap().is_match(&actual_url).unwrap() {
                 quarantine_message(&info, msg).await;
             }
+        }
+    }
+
+    if is_on_debug_server || should_run_on_volcanoids {
+        if NITRO_SCAM.read().unwrap().is_match(&msg.content).unwrap() {
+            quarantine_message(&info, msg).await;
         }
     }
 }
@@ -294,4 +304,5 @@ fn prep_regex() {
     STEAM_SCAM.read().unwrap();
     STEAM_SCAM_IGNORE.read().unwrap();
     BTLY_LINK.read().unwrap();
+    NITRO_SCAM.read().unwrap();
 }
