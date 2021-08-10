@@ -54,11 +54,16 @@ static STEAM_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_re
     format!(r"\/n[eo]w\/\?p[partner]+?[er]="),
     format!(r"steam[community]+?\.(?:com|ru)\/t[tradeof]+?[er]\/"),
     format!(r"https:\/\/i.imgurcom\/r9EWkux.png"),
-    format!(r"https:\/\/i.imgurcom\/SAvJYv5.png")
+    format!(r"https:\/\/i.imgurcom\/SAvJYv5.png"),
+    format!(r"steam-market\.xyz")
 ], true)));
 
 static STEAM_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
     format!(r"https?:\/\/(?:www\.)?steamcommunity.com")
+], true)));
+
+static BTLY_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
+    format!(r"https:\/\/bit.ly\/([a-z-A-Z0-9]+)")
 ], true)));
 
 struct Info<'a> {
@@ -119,6 +124,21 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
     if is_on_debug_server || should_run_on_volcanoids {
         if STEAM_SCAM.read().unwrap().is_match(&msg.content).unwrap() && !STEAM_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap() {
             quarantine_message(&info, msg).await;
+        }
+
+        // For bt.ly shortened URLs.
+        let btly_match = BTLY_LINK.read().unwrap().clone();
+        if btly_match.is_match(&msg.content).unwrap() {
+            let bitly_id = btly_match.captures(&msg.content).unwrap().unwrap().get(1).unwrap().as_str();
+            let client = reqwest::Client::new();
+            let bitly_url = format!("https://bit.ly/{}", bitly_id);
+            let actual_url = client.get(bitly_url)
+                .send().await.expect("Error getting bit.ly link info.")
+                .url().to_string();
+
+            if STEAM_SCAM.read().unwrap().is_match(&actual_url).unwrap() && !STEAM_SCAM_IGNORE.read().unwrap().is_match(&actual_url).unwrap() {
+                quarantine_message(&info, msg).await;
+            }
         }
     }
 }
@@ -273,4 +293,5 @@ fn prep_regex() {
     MULTIPLAYER_AUTO_REPLY_REGEX.read().unwrap();
     STEAM_SCAM.read().unwrap();
     STEAM_SCAM_IGNORE.read().unwrap();
+    BTLY_LINK.read().unwrap();
 }
