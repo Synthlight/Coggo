@@ -53,6 +53,7 @@ static STEAM_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_re
     format!(r"\/t[tradeof]+?[er]\/ne?w\/\?"),
     format!(r"\/n[eo]w\/\?p[partner]+?[er]="),
     format!(r"steam[community]+?\.(?:com|ru)\/t[tradeof]+?[er]\/"),
+    format!(r"stea(?:m|rn|n)[communityr]+?\.[a-zA-Z]+\/"),
     format!(r"https:\/\/i.imgurcom\/r9EWkux.png"),
     format!(r"https:\/\/i.imgurcom\/SAvJYv5.png"),
     format!(r"steam-market\.xyz")
@@ -67,7 +68,18 @@ static BTLY_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_rep
 ], true)));
 
 static NITRO_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!(r"Discord Nitro(?: for)? Free.*Steam Store")
+    format!(r"Discord Nitro(?: for)? Free.*Steam Store"),
+    format!(r"discord.*(?:free|nitro|discord|gift)"),
+    format!(r"(?:discorcl|dlscorcl|dlscord)")
+], true)));
+
+static NITRO_SCAM_HAS_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
+    format!(r"\/\S+\.\S+")
+], true)));
+
+static NITRO_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
+    format!(r"https?:\/\/(?:www\.)?discord.gift"),
+    format!(r"https?:\/\/(?:www\.)?tenor.com")
 ], true)));
 
 struct Info<'a> {
@@ -111,7 +123,7 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
     // Auto-reply for "console" & "steam". (For Volcanoids, ignore #discuss-other-games.)
     if is_on_debug_server || (should_run_on_volcanoids && channel_id != DISCUSS_OTHER_GAMES) {
         if CONSOLE_AUTO_REPLY_REGEX.read().unwrap().is_match(&msg.content).unwrap() {
-            create_auto_reply(&info, "**Volcanoids**? On **consoles**? Yes sir! But so far the main priority is adding more content before they dive into all the console shenanigans. That Rich guy will keep you updated!", true).await;
+            create_auto_reply(&info, "**Volcanoids**? On **consoles**? Yes sir! But so far the main priority is adding more content before they dive into all the console shenanigans. That Rich guy will keep you updated!\n(This is all we know. There is no ETA yet.)", true).await;
         }
         if STEAM_AUTO_REPLY_REGEX.read().unwrap().is_match(&msg.content).unwrap() {
             create_auto_reply(&info, "You can get Volcanoids on Steam here: https://store.steampowered.com/app/951440/Volcanoids?utm_source=discord&utm_medium=autoreply", true).await;
@@ -125,9 +137,12 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         }
     }
 
+    let mut quarantined = false;
+
     if is_on_debug_server || should_run_on_volcanoids {
-        if STEAM_SCAM.read().unwrap().is_match(&msg.content).unwrap() && !STEAM_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap() {
+        if STEAM_SCAM.read().unwrap().is_match(&msg.content).unwrap() && !STEAM_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap() && !quarantined {
             quarantine_message(&info, msg).await;
+            quarantined = true;
         }
 
         // For bt.ly shortened URLs.
@@ -140,14 +155,19 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
                 .send().await.expect("Error getting bit.ly link info.")
                 .url().to_string();
 
-            if STEAM_SCAM.read().unwrap().is_match(&actual_url).unwrap() && !STEAM_SCAM_IGNORE.read().unwrap().is_match(&actual_url).unwrap() {
+            if STEAM_SCAM.read().unwrap().is_match(&actual_url).unwrap() && !STEAM_SCAM_IGNORE.read().unwrap().is_match(&actual_url).unwrap() && !quarantined {
                 quarantine_message(&info, msg).await;
+                quarantined = true;
             }
         }
     }
 
-    if is_on_debug_server || should_run_on_volcanoids {
-        if NITRO_SCAM.read().unwrap().is_match(&msg.content).unwrap() {
+    if is_on_debug_server || (should_run_on_volcanoids && channel_id != MADE_ME_LAUGH) {
+        let is_nitro_scam = NITRO_SCAM.read().unwrap().is_match(&msg.content).unwrap();
+        let has_link = NITRO_SCAM_HAS_LINK.read().unwrap().is_match(&msg.content).unwrap();
+        let should_ignore = NITRO_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap();
+
+        if is_nitro_scam && has_link && !should_ignore && !quarantined {
             quarantine_message(&info, msg).await;
         }
     }
@@ -305,4 +325,6 @@ fn prep_regex() {
     STEAM_SCAM_IGNORE.read().unwrap();
     BTLY_LINK.read().unwrap();
     NITRO_SCAM.read().unwrap();
+    NITRO_SCAM_HAS_LINK.read().unwrap();
+    NITRO_SCAM_IGNORE.read().unwrap();
 }
