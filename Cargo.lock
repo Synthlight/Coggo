@@ -96,9 +96,9 @@ dependencies = [
 
 [[package]]
 name = "async-std"
-version = "1.9.0"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9f06685bad74e0570f5213741bea82158279a4103d988e57bfada11ad230341"
+checksum = "f8056f1455169ab86dd47b47391e4ab0cbd25410a70e9fe675544f49bafaf952"
 dependencies = [
  "async-channel",
  "async-global-executor",
@@ -316,18 +316,18 @@ dependencies = [
 
 [[package]]
 name = "const_format"
-version = "0.2.14"
+version = "0.2.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c75ea7d6aeb2ebd1ee24f7b7e1b23242ef5a56b3a693733b99bfbe5ef31d0306"
+checksum = "ae592b8ddbf42b388f8211f0fd4d0985768ed7316348277c250dca4513695492"
 dependencies = [
  "const_format_proc_macros",
 ]
 
 [[package]]
 name = "const_format_proc_macros"
-version = "0.2.14"
+version = "0.2.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29c36c619c422113552db4eb28cddba8faa757e33f758cc3415bd2885977b591"
+checksum = "98b53b21a34874c03f4ee8fe5a5dbd977fbe09cfa43b7e2362d94f33e42d56af"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1205,9 +1205,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.11.3"
+version = "0.11.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2296f2fac53979e8ccbc4a1136b25dcefd37be9ed7e4a1f6b05a6029c84ff124"
+checksum = "246e9f61b9bb77df069a947682be06e31ac43ea37862e244a69f177694ea6d22"
 dependencies = [
  "base64 0.13.0",
  "bytes 1.0.1",
@@ -1342,9 +1342,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.64"
+version = "1.0.67"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "799e97dc9fdae36a5c8b8f2cae9ce2ee9fdce2058c57a93e6099d919fd982f79"
+checksum = "a7f9e390c27c3c0ce8bc5d725f6e4d30a29d26659494aa4b17535f7522c5c950"
 dependencies = [
  "itoa",
  "ryu",
@@ -1365,9 +1365,9 @@ dependencies = [
 
 [[package]]
 name = "serenity"
-version = "0.10.8"
+version = "0.10.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b68c1f5dbe25b32516f3f104726a9e8e3a96cf5960a106213241738ffe108f81"
+checksum = "6275d443266aedf2be507a245ddc23db0c07b1b99774e16f3c879e96a78b067a"
 dependencies = [
  "async-trait",
  "async-tungstenite",
@@ -1484,9 +1484,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.7.1"
+version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fb2ed024293bb19f7a5dc54fe83bf86532a44c12a2bb8ba40d64a4509395ca2"
+checksum = "b4efe6fc2395938c8155973d7be49fe8d03a843726e285e100a8a383cc0154ce"
 dependencies = [
  "autocfg",
  "bytes 1.0.1",
