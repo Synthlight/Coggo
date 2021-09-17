@@ -69,8 +69,8 @@ static BTLY_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_rep
 
 static NITRO_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
     format!(r"Discord Nitro(?: for)? Free.*Steam Store"),
-    format!(r"discord.*(?:free|nitro|discord|gift)"),
-    format!(r"(?:discorcl|dlscorcl|dlscord)")
+    format!(r"discord.*?(?:free|nitro|discord|gift)"),
+    format!(r"(?!discord)d[il]s[ck]or[dcl]{{1,2}}")
 ], true)));
 
 static NITRO_SCAM_HAS_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
@@ -162,13 +162,15 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         }
     }
 
-    if is_on_debug_server || (should_run_on_volcanoids && channel_id != MADE_ME_LAUGH) {
+    //if is_on_debug_server || (should_run_on_volcanoids && channel_id != MADE_ME_LAUGH) {
+    if is_on_debug_server || should_run_on_volcanoids {
         let is_nitro_scam = NITRO_SCAM.read().unwrap().is_match(&msg.content).unwrap();
         let has_link = NITRO_SCAM_HAS_LINK.read().unwrap().is_match(&msg.content).unwrap();
         let should_ignore = NITRO_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap();
 
         if is_nitro_scam && has_link && !should_ignore && !quarantined {
             quarantine_message(&info, msg).await;
+            quarantined = true;
         }
     }
 }
@@ -207,7 +209,7 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
     let thumbs_down_reaction_copy = thumbs_down_reaction.clone();
     let reaction = msg.await_reaction(info.ctx)
         .filter(move |f| { f.emoji == thumbs_up_reaction_copy || f.emoji == thumbs_down_reaction_copy })
-        .timeout(Duration::from_secs(20))
+        .timeout(Duration::from_secs(60))
         .await;
 
     let mut is_thumbs_up: bool = false;
