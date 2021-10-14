@@ -78,8 +78,8 @@ static NITRO_SCAM_HAS_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(creat
 ], true)));
 
 static NITRO_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!(r"https?:\/\/(?:www\.)?discord.gift"),
-    format!(r"https?:\/\/(?:www\.)?tenor.com")
+    format!(r"https?:\/\/(?:www\.)?discord\.gift"),
+    format!(r"https?:\/\/(?:www\.)?tenor\.com")
 ], true)));
 
 struct Info<'a> {
