@@ -70,7 +70,7 @@ static BTLY_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_rep
 static NITRO_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
     format!(r"Discord Nitro(?: for)? Free.*Steam Store"),
     format!(r"discord.*?(?:free|nitro|discord|gift)"),
-    format!(r"(?!discord)d[il]s[ck]o(?:cl|r[dcl]{{1,2}}|[crd]{{1,3}})")
+    format!(r"(?!discord)d[il][sz][ck]o(?:cl|r[dcl]{{1,2}}|[crd]{{1,3}})")
 ], true)));
 
 static NITRO_SCAM_HAS_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
