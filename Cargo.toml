@@ -9,11 +9,11 @@ edition = "2018"
 [dependencies]
 async-std = { version = "1.10.0" }
 chrono = { version = "0.4.19" }
-const_format = { version = "0.2.20" }
-fancy-regex = { version = "0.6.0" }
-once_cell = { version = "1.8.0" }
+const_format = { version = "0.2.22" }
+fancy-regex = { version = "0.7.1" }
+once_cell = { version = "1.9.0" }
 regex = { version = "1.5.4" }
-reqwest = { version = "0.11.4" }
-serde_json = { version = "1.0.67" }
+reqwest = { version = "0.11.7" }
+serde_json = { version = "1.0.73" }
 serenity = { version = "0.10.9", features = ["collector"] }
-tokio = { version = "1.11.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.15.0", features = ["macros", "rt-multi-thread"] }
