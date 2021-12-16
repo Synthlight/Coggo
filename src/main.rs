@@ -1,9 +1,3 @@
-use std::env;
-use std::str::FromStr;
-use std::sync::{Arc, RwLock};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Duration;
-
 use async_std::sync::Mutex;
 use async_std::task::sleep;
 use chrono::{DateTime, Local};
@@ -14,6 +8,7 @@ use serde_json::Value;
 use serenity::async_trait;
 use serenity::builder::EditMessage;
 use serenity::client::{Client, Context, EventHandler};
+use serenity::client::bridge::gateway::ShardManager;
 use serenity::framework::standard::{CommandError, CommandResult, StandardFramework};
 use serenity::framework::standard::macros::{command, group, hook};
 use serenity::http::CacheHttp;
@@ -21,7 +16,14 @@ use serenity::model::channel::{Message, ReactionType};
 use serenity::model::gateway::Ready;
 use serenity::model::guild::Emoji;
 use serenity::model::id::{ChannelId, EmojiId, GuildId, MessageId};
+use serenity::prelude::TypeMapKey;
 use serenity::utils::hashmap_to_json_map;
+
+use std::env;
+use std::str::FromStr;
+use std::sync::{Arc, RwLock};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
 
 include!["lib/lib.rs"];
 
@@ -33,6 +35,7 @@ include!["auto_reply/auto_reply.rs"];
 include!["bot_commands/how_to_paint.rs"];
 include!["bot_commands/new_player_info.rs"];
 include!["bot_commands/no.rs"];
+include!["bot_commands/shutdown.rs"];
 include!["bot_commands/uptime.rs"];
 include!["bot_commands/verify.rs"];
 
@@ -41,7 +44,7 @@ static START_TIME: Lazy<RwLock<DateTime<Local>>> = Lazy::new(|| RwLock::new(Loca
 static EMOJI: Lazy<Arc<Mutex<CachedEmoji>>> = Lazy::new(|| Arc::new(Mutex::new(CachedEmoji::new())));
 
 #[group]
-#[commands(how_to_paint, new_player_info, no, uptime, verify)]
+#[commands(how_to_paint, new_player_info, no, shutdown, uptime, verify)]
 struct General;
 
 struct Handler;
@@ -51,6 +54,12 @@ impl EventHandler for Handler {
     async fn ready(&self, ctx: Context, _: Ready) {
         ready(&ctx).await;
     }
+}
+
+pub struct ShardManagerContainer;
+
+impl TypeMapKey for ShardManagerContainer {
+    type Value = Arc<serenity::prelude::Mutex<ShardManager>>;
 }
 
 #[tokio::main]
@@ -77,6 +86,11 @@ async fn main() {
         .framework(framework)
         .await
         .expect("Error creating client.");
+
+    {
+        let mut data = client.data.write().await;
+        data.insert::<ShardManagerContainer>(client.shard_manager.clone());
+    }
 
     // Start listening for events by starting a single shard.
     client.start().await.expect("An error occurred while running the client.");
