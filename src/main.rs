@@ -29,6 +29,7 @@ include!["lib/lib.rs"];
 
 include!["models/consts.rs"];
 include!["models/emoji.rs"];
+include!["models/spam_list.rs"];
 
 include!["auto_reply/auto_reply.rs"];
 
@@ -42,6 +43,7 @@ include!["bot_commands/verify.rs"];
 static DEBUG: AtomicBool = AtomicBool::new(true);
 static START_TIME: Lazy<RwLock<DateTime<Local>>> = Lazy::new(|| RwLock::new(Local::now()));
 static EMOJI: Lazy<Arc<Mutex<CachedEmoji>>> = Lazy::new(|| Arc::new(Mutex::new(CachedEmoji::new())));
+static SPAM_LIST: Lazy<Arc<Mutex<SpamList>>> = Lazy::new(|| Arc::new(Mutex::new(SpamList::new())));
 
 #[group]
 #[commands(how_to_paint, new_player_info, no, shutdown, uptime, verify)]
@@ -97,7 +99,8 @@ async fn main() {
 }
 
 async fn ready(ctx: &Context) {
-    EMOJI.lock().await.setup_emoji(&ctx).await;
+    EMOJI.lock().await.setup(&ctx).await;
+    SPAM_LIST.lock().await.setup().await;
 
     prep_regex();
 

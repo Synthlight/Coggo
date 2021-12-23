@@ -172,9 +172,18 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         let has_link = NITRO_SCAM_HAS_LINK.read().unwrap().is_match(&msg.content).unwrap();
         let should_ignore = NITRO_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap();
 
-        if is_nitro_scam && has_link && !should_ignore && !quarantined {
+        let spam_list = SPAM_LIST.lock().await.get_contents();
+        let mut is_scam_url = false;
+        for spam_url in spam_list {
+            if msg.content.contains(spam_url.as_str()) {
+                is_scam_url = true;
+                break;
+            }
+        }
+
+        if (is_nitro_scam || is_scam_url) && has_link && !should_ignore && !quarantined {
             quarantine_message(&info, msg).await;
-            quarantined = true;
+            //quarantined = true;
         }
     }
 }

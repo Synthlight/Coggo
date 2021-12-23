@@ -19,7 +19,7 @@ impl CachedEmoji {
         };
     }
 
-    async fn setup_emoji(&mut self, ctx: &Context) {
+    async fn setup(&mut self, ctx: &Context) {
         if self.thumbs_up_testing.is_none() {
             println!("Fetching/caching emojis.");
 
