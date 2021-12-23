@@ -1,3 +1,9 @@
+use std::env;
+use std::str::FromStr;
+use std::sync::{Arc, RwLock};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
+
 use async_std::sync::Mutex;
 use async_std::task::sleep;
 use chrono::{DateTime, Local};
@@ -19,12 +25,6 @@ use serenity::model::id::{ChannelId, EmojiId, GuildId, MessageId};
 use serenity::prelude::TypeMapKey;
 use serenity::utils::hashmap_to_json_map;
 
-use std::env;
-use std::str::FromStr;
-use std::sync::{Arc, RwLock};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Duration;
-
 include!["lib/lib.rs"];
 
 include!["models/consts.rs"];
@@ -33,6 +33,7 @@ include!["models/spam_list.rs"];
 
 include!["auto_reply/auto_reply.rs"];
 
+include!["bot_commands/help.rs"];
 include!["bot_commands/how_to_paint.rs"];
 include!["bot_commands/new_player_info.rs"];
 include!["bot_commands/no.rs"];
@@ -46,7 +47,7 @@ static EMOJI: Lazy<Arc<Mutex<CachedEmoji>>> = Lazy::new(|| Arc::new(Mutex::new(C
 static SPAM_LIST: Lazy<Arc<Mutex<SpamList>>> = Lazy::new(|| Arc::new(Mutex::new(SpamList::new())));
 
 #[group]
-#[commands(how_to_paint, new_player_info, no, shutdown, uptime, verify)]
+#[commands(help, how_to_paint, new_player_info, no, shutdown, uptime, verify)]
 struct General;
 
 struct Handler;
