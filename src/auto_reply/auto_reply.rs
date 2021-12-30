@@ -79,7 +79,7 @@ static NITRO_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_re
 ], true)));
 
 static NITRO_SCAM_HAS_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!(r"\/\S+\.\S+")
+    format!(r"\/(\S+\.\S+?)\/")
 ], true)));
 
 static NITRO_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
@@ -176,10 +176,13 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
 
         let spam_list = SPAM_LIST.lock().await.get_contents();
         let mut is_scam_url = false;
-        for spam_url in spam_list {
-            if msg.content.contains(spam_url.as_str()) {
-                is_scam_url = true;
-                break;
+        if has_link {
+            let link_host = NITRO_SCAM_HAS_LINK.read().unwrap().captures(&msg.content).unwrap().unwrap().get(1).unwrap().as_str();
+            for spam_url in spam_list {
+                if link_host == spam_url.as_str() {
+                    is_scam_url = true;
+                    break;
+                }
             }
         }
 
