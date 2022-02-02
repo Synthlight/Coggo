@@ -246,28 +246,19 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
         }
     }
 
-    if is_thumbs_up || is_thumbs_down {
-        edit_msg_text(info.ctx, &msg, &response).await.expect("Error editing auto-reply message.");
-    }
+    edit_msg_text(info.ctx, &msg, &response).await.expect("Error editing auto-reply message.");
 
     thumbs_up.delete_all(info.ctx).await.expect("Error deleting auto-reply reactions.");
     thumbs_down.delete_all(info.ctx).await.expect("Error deleting auto-reply reactions.");
 
-    // The user didn't respond in time, leaving auto-reply note.
-    if !(is_thumbs_up || is_thumbs_down) {
-        msg.edit(info.ctx, |m| m
-            .content("You didn't react... I'll leave this note here so I can fix the potential false positive for next time.")
-            .suppress_embeds(true)).await
-            .expect("Error editing auto-reply message for final note.");
-        println!("User {} didn't react in time, leaving auto-reply note.", info.msg.author.id);
-        return;
-    };
-
-    // Leave a thanks for the feedback msg for {n} seconds.
-    let feedback_msg = msg.channel_id.say(info.ctx, "Thanks for the feedback").await.expect("Error sending thanks for the feedback message.");
-    sleep(Duration::from_secs(5)).await;
-    // ...and then delete it.
-    feedback_msg.delete(info.ctx).await.expect("Error deleting thanks for the feedback message.");
+    // If the user responded, say thanks, otherwise do nothing.
+    if is_thumbs_up || is_thumbs_down {
+        // Leave a thanks for the feedback msg for {n} seconds.
+        let feedback_msg = msg.channel_id.say(info.ctx, "Thanks for the feedback").await.expect("Error sending thanks for the feedback message.");
+        sleep(Duration::from_secs(5)).await;
+        // ...and then delete it.
+        feedback_msg.delete(info.ctx).await.expect("Error deleting thanks for the feedback message.");
+    }
 
     // The user gave a thumbs down, leaving auto-reply note.
     if is_thumbs_down {
