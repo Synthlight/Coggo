@@ -171,7 +171,13 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
 
     //if is_on_debug_server || (should_run_on_volcanoids && channel_id != MADE_ME_LAUGH) {
     if is_on_debug_server || should_run_on_volcanoids {
-        let is_nitro_scam = NITRO_SCAM.read().unwrap().is_match(&msg.content).unwrap();
+        let mut is_nitro_scam = NITRO_SCAM.read().unwrap().is_match(&msg.content).unwrap();
+
+        if msg.content.to_lowercase().starts_with("who is first?")
+            || msg.content.to_lowercase().starts_with("@everyone") {
+            is_nitro_scam = true;
+        }
+
         let has_link = NITRO_SCAM_HAS_LINK.read().unwrap().is_match(&msg.content).unwrap();
         let should_ignore = NITRO_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap();
 

@@ -13,7 +13,7 @@ const_format = { version = "0.2.22" }
 fancy-regex = { version = "0.7.1" }
 once_cell = { version = "1.9.0" }
 regex = { version = "1.5.4" }
-reqwest = { version = "0.11.7" }
-serde_json = { version = "1.0.73" }
-serenity = { version = "0.10.9", features = ["collector"] }
-tokio = { version = "1.15.0", features = ["macros", "rt-multi-thread"] }
+reqwest = { version = "0.11.9" }
+serde_json = { version = "1.0.78" }
+serenity = { version = "0.10.10", features = ["collector"] }
+tokio = { version = "1.16.1", features = ["macros", "rt-multi-thread"] }
