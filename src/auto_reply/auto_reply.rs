@@ -89,6 +89,20 @@ static NITRO_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_
     format!(r"https?:\/\/(?:www\.)?tenor\.com")
 ], true)));
 
+static LINK_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
+    format!(r"discord\.(?:gg|com)\/[a-zA-Z]+"),
+    format!(r"discord\.(?:gg|com)\/invite\/[a-zA-Z]+"),
+    format!(r"direct-link\.net\/[0-9]+\/"),
+    format!(r"https?:\/\/t.me\/")
+], true)));
+
+static LINK_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
+    format!(r"discord\.(?:gg|com)\/vcUsSWP"),
+    format!(r"discord\.(?:gg|com)\/invite\/vcUsSWP"),
+    format!(r"discord\.(?:gg|com)\/volcanoids"),
+    format!(r"discord\.(?:gg|com)\/invite\/volcanoids")
+], true)));
+
 struct Info<'a> {
     ctx: &'a Context,
     msg: &'a Message,
@@ -124,8 +138,9 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         thumbs_down: &thumbs_down,
     };
 
-    let is_on_debug_server = DEBUG.load(Ordering::Relaxed) && (guild_id == COGGO_TESTING || guild_id == CAPS_SUB);
-    let should_run_on_volcanoids = !DEBUG.load(Ordering::Relaxed) && guild_id == VOLCANOIDS;
+    let is_debug = DEBUG.load(Ordering::Relaxed);
+    let is_on_debug_server = is_debug && (guild_id == COGGO_TESTING || guild_id == CAPS_SUB);
+    let should_run_on_volcanoids = !is_debug && guild_id == VOLCANOIDS;
 
     // Auto-reply for "console" & "steam". (For Volcanoids, ignore #discuss-other-games.)
     if is_on_debug_server || (should_run_on_volcanoids && channel_id != DISCUSS_OTHER_GAMES) {
@@ -144,60 +159,87 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         }
     }
 
-    let mut quarantined = false;
-
     if is_on_debug_server || should_run_on_volcanoids {
-        if STEAM_SCAM.read().unwrap().is_match(&msg.content).unwrap() && !STEAM_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap() && !quarantined {
+        if is_debug { println!("Checking message for a scam: {}", &msg.content); }
+        let mut quarantined = check_for_steam_scam(&msg, &info).await;
+        if is_debug && quarantined { println!("Is a steam scam? {}", quarantined); }
+        if !quarantined { quarantined = check_for_nitro_scam(&msg, &info).await; }
+        if is_debug && quarantined { println!("Is a nitro scam? {}", quarantined); }
+        if !quarantined { quarantined = check_for_invite_scam(&msg, &info).await; }
+        if is_debug && quarantined { println!("Is a invite scam? {}", quarantined); }
+        if is_debug && !quarantined { println!("Message was not a scam."); }
+    }
+}
+
+async fn check_for_steam_scam<'a>(msg: &Message, info: &'a Info<'a>) -> bool {
+    let matched_steam_scam_regex = STEAM_SCAM.read().unwrap().is_match(&msg.content).unwrap();
+    let matched_steam_scam_ignore_regex = STEAM_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap();
+
+    if matched_steam_scam_regex && !matched_steam_scam_ignore_regex {
+        quarantine_message(&info, msg).await;
+        return true;
+    }
+
+    // For bt.ly shortened URLs.
+    let btly_match = BTLY_LINK.read().unwrap().clone();
+    if btly_match.is_match(&msg.content).unwrap() {
+        let bitly_id = btly_match.captures(&msg.content).unwrap().unwrap().get(1).unwrap().as_str();
+        let client = reqwest::Client::new();
+        let bitly_url = format!("https://bit.ly/{}", bitly_id);
+        let actual_url = client.get(bitly_url)
+            .send().await.expect("Error getting bit.ly link info.")
+            .url().to_string();
+
+        if STEAM_SCAM.read().unwrap().is_match(&actual_url).unwrap() && !STEAM_SCAM_IGNORE.read().unwrap().is_match(&actual_url).unwrap() {
             quarantine_message(&info, msg).await;
-            quarantined = true;
+            return true;
         }
+    }
 
-        // For bt.ly shortened URLs.
-        let btly_match = BTLY_LINK.read().unwrap().clone();
-        if btly_match.is_match(&msg.content).unwrap() {
-            let bitly_id = btly_match.captures(&msg.content).unwrap().unwrap().get(1).unwrap().as_str();
-            let client = reqwest::Client::new();
-            let bitly_url = format!("https://bit.ly/{}", bitly_id);
-            let actual_url = client.get(bitly_url)
-                .send().await.expect("Error getting bit.ly link info.")
-                .url().to_string();
+    return false;
+}
 
-            if STEAM_SCAM.read().unwrap().is_match(&actual_url).unwrap() && !STEAM_SCAM_IGNORE.read().unwrap().is_match(&actual_url).unwrap() && !quarantined {
-                quarantine_message(&info, msg).await;
-                quarantined = true;
+async fn check_for_nitro_scam<'a>(msg: &Message, info: &'a Info<'a>) -> bool {
+    let mut is_nitro_scam = NITRO_SCAM.read().unwrap().is_match(&msg.content).unwrap();
+
+    if msg.content.to_lowercase().starts_with("who is first?")
+        || msg.content.to_lowercase().starts_with("@everyone") {
+        is_nitro_scam = true;
+    }
+
+    let has_link = NITRO_SCAM_HAS_LINK.read().unwrap().is_match(&msg.content).unwrap();
+    let should_ignore = NITRO_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap();
+
+    let spam_list = SPAM_LIST.lock().await.get_contents();
+    let mut is_scam_url = false;
+    if has_link {
+        let link_host = NITRO_SCAM_HAS_LINK.read().unwrap().captures(&msg.content).unwrap().unwrap().get(1).unwrap().as_str();
+        for spam_url in spam_list {
+            if link_host == spam_url.as_str() {
+                is_scam_url = true;
+                break;
             }
         }
     }
 
-    //if is_on_debug_server || (should_run_on_volcanoids && channel_id != MADE_ME_LAUGH) {
-    if is_on_debug_server || should_run_on_volcanoids {
-        let mut is_nitro_scam = NITRO_SCAM.read().unwrap().is_match(&msg.content).unwrap();
-
-        if msg.content.to_lowercase().starts_with("who is first?")
-            || msg.content.to_lowercase().starts_with("@everyone") {
-            is_nitro_scam = true;
-        }
-
-        let has_link = NITRO_SCAM_HAS_LINK.read().unwrap().is_match(&msg.content).unwrap();
-        let should_ignore = NITRO_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap();
-
-        let spam_list = SPAM_LIST.lock().await.get_contents();
-        let mut is_scam_url = false;
-        if has_link {
-            let link_host = NITRO_SCAM_HAS_LINK.read().unwrap().captures(&msg.content).unwrap().unwrap().get(1).unwrap().as_str();
-            for spam_url in spam_list {
-                if link_host == spam_url.as_str() {
-                    is_scam_url = true;
-                    break;
-                }
-            }
-        }
-
-        if (is_nitro_scam || is_scam_url) && has_link && !should_ignore && !quarantined {
-            quarantine_message(&info, msg).await;
-            //quarantined = true;
-        }
+    if (is_nitro_scam || is_scam_url) && has_link && !should_ignore {
+        quarantine_message(&info, msg).await;
+        return true;
     }
+
+    return false;
+}
+
+async fn check_for_invite_scam<'a>(msg: &Message, info: &'a Info<'a>) -> bool {
+    let has_scam_link = LINK_SCAM.read().unwrap().is_match(&msg.content).unwrap();
+    let is_scam_link_whitelisted = LINK_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap();
+
+    if has_scam_link && !is_scam_link_whitelisted {
+        quarantine_message(&info, msg).await;
+        return true;
+    }
+
+    return false;
 }
 
 async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq_msg_in_response: bool) {
@@ -289,6 +331,8 @@ async fn get_thumb_reactions<'a>(info: &'a Info<'a>, thumbs_up_reaction: &Reacti
 }
 
 async fn quarantine_message<'a>(info: &'a Info<'a>, msg: &Message) {
+    if DEBUG.load(Ordering::Relaxed) { println!("Quarantining the message."); }
+
     let guild = msg.guild_id.unwrap();
     let guild_id = guild.0;
     let channel_id: u64;
@@ -345,4 +389,6 @@ fn prep_regex() {
     NITRO_SCAM.read().unwrap();
     NITRO_SCAM_HAS_LINK.read().unwrap();
     NITRO_SCAM_IGNORE.read().unwrap();
+    LINK_SCAM.read().unwrap();
+    LINK_SCAM_IGNORE.read().unwrap();
 }

@@ -84,6 +84,8 @@ async fn main() {
         .normal_message(auto_reply)
         .after(after_hook);
 
+    //let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::GUILD_MESSAGE_REACTIONS | GatewayIntents::MESSAGE_CONTENT;
+
     let mut client = Client::builder(env::var("token").expect("You must pass a token as `token` env var."))
         .event_handler(Handler)
         .framework(framework)

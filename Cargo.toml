@@ -7,13 +7,13 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-std = { version = "1.10.0" }
+async-std = { version = "1.12.0" }
 chrono = { version = "0.4.19" }
-const_format = { version = "0.2.22" }
-fancy-regex = { version = "0.7.1" }
-once_cell = { version = "1.9.0" }
-regex = { version = "1.5.4" }
-reqwest = { version = "0.11.9" }
-serde_json = { version = "1.0.78" }
-serenity = { version = "0.10.10", features = ["collector"] }
-tokio = { version = "1.16.1", features = ["macros", "rt-multi-thread"] }
+const_format = { version = "0.2.26" }
+fancy-regex = { version = "0.10.0" }
+once_cell = { version = "1.13.0" }
+regex = { version = "1.6.0" }
+reqwest = { version = "0.11.11" }
+serde_json = { version = "1.0.82" }
+serenity = { version = "0.10.10", features = ["collector"] } # Stay on 10 because fuck gateway intents.
+tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
