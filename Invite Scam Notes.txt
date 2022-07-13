@@ -1,9 +1,16 @@
 Valid:
 https://discord.gg/vcUsSWP
+https://discord.com/vcUsSWP
 https://discord.gg/invite/vcUsSWP
+https://discord.com/invite/vcUsSWP
 https://discord.gg/invite/volcanoids
+https://discord.com/invite/volcanoids
 
 Invalid:
 https://direct-link.net/468849/charli-damelio-nudepack
-https://discord.gg/invite/RKXWcx
-https://discord.gg/RKXWcx
+https://discord.gg/invite/RvuKXWcx
+https://discord.com/invite/RvuKXWcx
+https://discord.gg/RvuKXWcx
+https://discord.com/RvuKXWcx
+discord.gg/invite/RvuKXWcx
+discord.com/invite/RvuKXWcx
