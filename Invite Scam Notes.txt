@@ -14,3 +14,6 @@ https://discord.gg/RvuKXWcx
 https://discord.com/RvuKXWcx
 discord.gg/invite/RvuKXWcx
 discord.com/invite/RvuKXWcx
+
+Should not be detected:
+https://discord.com/channels/444244464903651348/445199967540346881/997234749233958943

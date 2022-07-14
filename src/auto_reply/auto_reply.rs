@@ -90,7 +90,7 @@ static NITRO_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_
 ], true)));
 
 static LINK_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!(r"discord\.(?:gg|com)\/[a-zA-Z]+"),
+    format!(r"discord\.(?:gg|com)\/[a-zA-Z]{{6,8}}[^/](?:\s|$)"),
     format!(r"discord\.(?:gg|com)\/invite\/[a-zA-Z]+"),
     format!(r"direct-link\.net\/[0-9]+\/"),
     format!(r"https?:\/\/t.me\/")
@@ -100,7 +100,8 @@ static LINK_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_a
     format!(r"discord\.(?:gg|com)\/vcUsSWP"),
     format!(r"discord\.(?:gg|com)\/invite\/vcUsSWP"),
     format!(r"discord\.(?:gg|com)\/volcanoids"),
-    format!(r"discord\.(?:gg|com)\/invite\/volcanoids")
+    format!(r"discord\.(?:gg|com)\/invite\/volcanoids"),
+    format!(r"discord\.(?:gg|com)\/channels")
 ], true)));
 
 struct Info<'a> {
