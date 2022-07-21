@@ -18,12 +18,12 @@ use serenity::client::bridge::gateway::ShardManager;
 use serenity::framework::standard::{CommandError, CommandResult, StandardFramework};
 use serenity::framework::standard::macros::{command, group, hook};
 use serenity::http::CacheHttp;
+use serenity::json::hashmap_to_json_map;
 use serenity::model::channel::{Message, ReactionType};
 use serenity::model::gateway::Ready;
 use serenity::model::guild::Emoji;
 use serenity::model::id::{ChannelId, EmojiId, GuildId, MessageId};
-use serenity::prelude::TypeMapKey;
-use serenity::utils::hashmap_to_json_map;
+use serenity::prelude::{GatewayIntents, TypeMapKey};
 
 include!["lib/lib.rs"];
 
@@ -84,9 +84,9 @@ async fn main() {
         .normal_message(auto_reply)
         .after(after_hook);
 
-    //let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::GUILD_MESSAGE_REACTIONS | GatewayIntents::MESSAGE_CONTENT;
+    let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::GUILD_MESSAGE_REACTIONS | GatewayIntents::MESSAGE_CONTENT;
 
-    let mut client = Client::builder(env::var("token").expect("You must pass a token as `token` env var."))
+    let mut client = Client::builder(env::var("token").expect("You must pass a token as `token` env var."), intents)
         .event_handler(Handler)
         .framework(framework)
         .await
