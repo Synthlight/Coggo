@@ -168,8 +168,21 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         if is_debug && quarantined { println!("Is a nitro scam? {}", quarantined); }
         if !quarantined { quarantined = check_for_invite_scam(&msg, &info).await; }
         if is_debug && quarantined { println!("Is a invite scam? {}", quarantined); }
+        if !quarantined { quarantined = check_for_banned_characters(&msg, &info).await; }
+        if is_debug && quarantined { println!("Is a banned character? {}", quarantined); }
         if is_debug && !quarantined { println!("Message was not a scam."); }
     }
+}
+
+async fn check_for_banned_characters<'a>(msg: &Message, info: &'a Info<'a>) -> bool {
+    let has_r18 = msg.content.contains('🔞');
+
+    if has_r18 {
+        quarantine_message(&info, msg).await;
+        return true;
+    }
+
+    return true;
 }
 
 async fn check_for_steam_scam<'a>(msg: &Message, info: &'a Info<'a>) -> bool {
