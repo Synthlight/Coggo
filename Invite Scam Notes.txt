@@ -1,4 +1,4 @@
-Valid:
+Whitelist:
 https://discord.gg/vcUsSWP
 https://discord.com/vcUsSWP
 https://discord.gg/invite/vcUsSWP
@@ -6,7 +6,7 @@ https://discord.com/invite/vcUsSWP
 https://discord.gg/invite/volcanoids
 https://discord.com/invite/volcanoids
 
-Invalid:
+Blacklist:
 https://direct-link.net/468849/charli-damelio-nudepack
 https://discord.gg/invite/RvuKXWcx
 https://discord.com/invite/RvuKXWcx
@@ -14,6 +14,8 @@ https://discord.gg/RvuKXWcx
 https://discord.com/RvuKXWcx
 discord.gg/invite/RvuKXWcx
 discord.com/invite/RvuKXWcx
+https://discord.gg/qMg9b7dgBm
+https://discord.gg/odyisland
 
 Should not be detected:
 https://discord.com/channels/444244464903651348/445199967540346881/997234749233958943
