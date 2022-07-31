@@ -90,7 +90,7 @@ static NITRO_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_
 ], true)));
 
 static LINK_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!(r"discord\.(?:gg|com)\/[a-zA-Z0-9]{{6,12}}[^/](?:\s|$)"),
+    format!(r"discord\.(?:gg|com)\/[a-zA-Z0-9]{{1,12}}[^/](?:\s|$)"),
     format!(r"discord\.(?:gg|com)\/invite\/[a-zA-Z0-9]+"),
     format!(r"direct-link\.net\/[0-9]+\/"),
     format!(r"https?:\/\/t.me\/")
