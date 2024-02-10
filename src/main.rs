@@ -6,10 +6,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use async_std::sync::Mutex;
 use chrono::{DateTime, Local};
 use once_cell::sync::Lazy;
+use serenity::{async_trait, Client};
 use serenity::all::{Context, EventHandler, GatewayIntents, Message, Ready, ShardManager, StandardFramework};
 use serenity::all::standard::{CommandError, Configuration};
 use serenity::all::standard::macros::{group, hook};
-use serenity::{async_trait, Client};
 use serenity::prelude::TypeMapKey;
 
 use crate::auto_reply::*;
@@ -20,10 +20,12 @@ use crate::bot_commands::uptime::*;
 use crate::bot_commands::verify::*;
 use crate::models::emoji::*;
 use crate::models::spam_list::*;
+use crate::teaser_detection::*;
 
 pub mod auto_reply;
 pub mod bot_commands;
 pub mod models;
+pub mod teaser_detection;
 pub mod util;
 
 static DEBUG: AtomicBool = AtomicBool::new(true);
@@ -99,6 +101,7 @@ async fn ready(ctx: &Context) {
 #[hook]
 pub async fn message_hook(ctx: &Context, msg: &Message) {
     auto_reply(ctx, msg).await;
+    teaser_detection(ctx, msg).await;
 }
 
 #[hook]
