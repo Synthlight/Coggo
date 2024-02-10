@@ -1,17 +1,17 @@
-const SPAM_LIST_URL: &str = "https://raw.githubusercontent.com/DevSpen/links/master/src/links.txt";
+pub const SPAM_LIST_URL: &str = "https://raw.githubusercontent.com/DevSpen/links/master/src/links.txt";
 
-struct SpamList {
+pub struct SpamList {
     entries: Option<Vec<String>>,
 }
 
 impl SpamList {
-    fn new() -> Self {
+    pub fn new() -> Self {
         return SpamList {
             entries: None,
         };
     }
 
-    async fn setup(&mut self) {
+    pub async fn setup(&mut self) {
         if self.entries.is_none() {
             println!("Fetching/caching spam list from: {}", SPAM_LIST_URL);
 
@@ -32,7 +32,7 @@ impl SpamList {
         }
     }
 
-    fn get_contents(&self) -> Vec<String> {
+    pub fn get_contents(&self) -> Vec<String> {
         return self.entries.clone().unwrap();
     }
 }

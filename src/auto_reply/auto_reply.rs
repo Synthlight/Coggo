@@ -1,3 +1,11 @@
+use std::num::NonZeroU64;
+use std::time::Duration;
+
+use async_std::task::sleep;
+use const_format::formatcp;
+use fancy_regex::{Regex, RegexBuilder};
+use serenity::all::{ChannelId, Emoji, MessageId, ReactionType};
+
 // The built-in implementation (derived from re2 I believe) doesn't support it.
 // Doesn't work right with fancy-regex either.
 const DISABLE_QUOTE_LOOKAHEAD: bool = true;
@@ -120,11 +128,11 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         return;
     }
 
-    let guild_id = msg.guild_id.unwrap().0;
-    let channel_id = msg.channel_id.0;
-    let user_id = msg.author.id.0;
+    let guild_id = non_zero_u64!(msg.guild_id.unwrap().into());
+    let channel_id = non_zero_u64!(msg.channel_id.into());
+    let user_id = non_zero_u64!(msg.author.id.into());
 
-    if user_id == KEJN && msg.guild_id.unwrap().0 == VOLCANOIDS {
+    if user_id == KEJN && guild_id == VOLCANOIDS {
         return;
     }
 
@@ -163,7 +171,7 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
     // Auto-reply for "multiplayer". (For Volcanoids, only run in #new-tunnelers, #discussion & #ask-the-community.)
     if is_on_debug_server || (should_run_on_volcanoids && (channel_id == NEW_TUNNELERS || channel_id == DISCUSSION || channel_id == ASK_THE_COMMUNITY || channel_id == ADMIN_BOT_CHAT_VOLC)) {
         if MULTIPLAYER_AUTO_REPLY_REGEX.read().unwrap().is_match(&msg.content).unwrap() {
-            create_auto_reply(&info, formatcp!("Yes! Volcanoids is multiplayer. See the <#{}> for details.", FAQ), true).await;
+            create_auto_reply(&info, formatcp!("Yes! Volcanoids is multiplayer. See the <#{}> for details.", FAQ.get()), true).await;
         }
     }
 
@@ -195,7 +203,7 @@ async fn check_for_banned_characters<'a>(msg: &Message, info: &'a Info<'a>) -> b
         return true;
     }
 
-    return true;
+    return false;
 }
 
 async fn check_for_steam_scam<'a>(msg: &Message, info: &'a Info<'a>) -> bool {
@@ -277,13 +285,15 @@ async fn check_for_invite_scam<'a>(msg: &Message, info: &'a Info<'a>) -> bool {
 async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq_msg_in_response: bool) {
     println!("User {} triggered auto-reply: {}", info.msg.author.id, text);
 
+    let channel_id = non_zero_u64!(info.channel_id.get());
+
     let mut response = text.to_string();
     if include_check_faq_msg_in_response == true {
         response += &format!("\n\nIf you have any other questions, make sure to read the <#{}>, your question might be already answered there.", FAQ);
     }
 
     let response_with_react_info: String;
-    let disable_reactions = info.channel_id.0 == ADMIN_BOT_CHAT_TEST || info.channel_id.0 == ADMIN_BOT_CHAT_VOLC;
+    let disable_reactions = channel_id == ADMIN_BOT_CHAT_TEST || channel_id == ADMIN_BOT_CHAT_VOLC;
     if disable_reactions {
         response_with_react_info = response.clone() + "\n(Reactions disabled for this channel.)";
     } else {
@@ -316,7 +326,7 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
 
     match reaction {
         Some(arc_emoji) => {
-            let emoji = &arc_emoji.as_inner_ref().emoji.clone();
+            let emoji = &arc_emoji.emoji.clone();
             is_thumbs_up = emoji == &thumbs_up_reaction;
             is_thumbs_down = emoji == &thumbs_down_reaction;
         }
@@ -326,7 +336,7 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
         }
     }
 
-    edit_msg_text(info.ctx, &msg, &response).await.expect("Error editing auto-reply message.");
+    edit_msg_text(info.ctx, &mut msg, &response).await.expect("Error editing auto-reply message.");
 
     thumbs_up.delete_all(info.ctx).await.expect("Error deleting auto-reply reactions.");
     thumbs_down.delete_all(info.ctx).await.expect("Error deleting auto-reply reactions.");
@@ -342,7 +352,7 @@ async fn create_auto_reply<'a>(info: &'a Info<'a>, text: &str, include_check_faq
 
     // The user gave a thumbs down, leaving auto-reply note.
     if is_thumbs_down {
-        msg.edit(info.ctx, |m| m
+        msg.edit(info.ctx, EditMessage::new()
             .content("Thanks for the feedback. I'll leave this note here so I can fix the false positive for next time.")
             .suppress_embeds(true)).await
             .expect("Error editing auto-reply message for final note.");
@@ -366,12 +376,12 @@ async fn quarantine_message<'a>(info: &'a Info<'a>, msg: &Message) {
     if DEBUG.load(Ordering::Relaxed) { println!("Quarantining the message."); }
 
     let guild = msg.guild_id.unwrap();
-    let guild_id = guild.0;
-    let channel_id: u64;
+    let guild_id = guild;
+    let channel_id: NonZeroU64;
 
-    if guild_id == COGGO_TESTING {
+    if guild_id.get() == COGGO_TESTING.get() {
         channel_id = ADMIN_BOT_CHAT_TEST
-    } else if guild_id == VOLCANOIDS {
+    } else if guild_id.get() == VOLCANOIDS.get() {
         channel_id = ADMIN_BOT_CHAT_VOLC
     } else {
         return;
@@ -383,7 +393,8 @@ async fn quarantine_message<'a>(info: &'a Info<'a>, msg: &Message) {
 
     let string = Regex::new(r"(http\S+)").unwrap().replace_all(&msg.content, "<$1>");
     let mut report = admin_bot_channel.say(info.ctx, format!("Deleted potential scam message in <#{}> by <@{}>\n{}", msg.channel_id, msg.author.id, string)).await.expect("Error reporting scam message.");
-    report.suppress_embeds(info.ctx).await.expect("Error removing embeds.");
+    report.edit(info.ctx, EditMessage::new()
+        .suppress_embeds(true)).await.expect("Error removing embeds.");
 }
 
 fn create_auto_reply_regex(individual_lines_to_match: &[String], ignore_quoted_text: bool) -> Regex {
