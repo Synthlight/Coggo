@@ -1,10 +1,13 @@
-use serenity::all::Message;
-use serenity::builder::EditMessage;
+use std::num::NonZeroU64;
+use std::sync::atomic::Ordering;
 
-use crate::macros::non_zero_u64;
+use serenity::all::{Context, EditMessage, Message};
+
+use crate::DEBUG;
+use crate::util::macros::*;
 use crate::models::consts::*;
 
-fn should_run_on_target_server(msg: &Message) -> bool {
+pub fn should_run_on_target_server(msg: &Message) -> bool {
     if msg.guild_id.is_none() {
         return false;
     }
@@ -18,7 +21,7 @@ fn should_run_on_target_server(msg: &Message) -> bool {
     return run_on_volc || (run_on_testing);
 }
 
-async fn edit_msg_text(ctx: &Context, msg: &mut Message, new_text: &String) -> serenity::Result<()> {
+pub async fn edit_msg_text(ctx: &Context, msg: &mut Message, new_text: &String) -> serenity::Result<()> {
     let mut builder = EditMessage::default();
     builder = builder.content(new_text);
     return msg.edit(ctx, builder).await;

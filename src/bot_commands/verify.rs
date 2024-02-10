@@ -1,3 +1,9 @@
+use serenity::all::{Context, CreateEmbed, CreateMessage, Message};
+use serenity::all::standard::CommandResult;
+use serenity::all::standard::macros::command;
+
+use crate::util::lib::*;
+
 #[command]
 async fn verify(ctx: &Context, msg: &Message) -> CommandResult {
     if !should_run_on_target_server(msg) {

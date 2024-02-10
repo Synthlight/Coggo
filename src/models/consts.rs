@@ -1,6 +1,6 @@
 use std::num::NonZeroU64;
 
-use crate::macros::non_zero_u64;
+use crate::util::macros::*;
 
 // Servers
 pub const COGGO_TESTING: NonZeroU64 = non_zero_u64!(853358073964265512);

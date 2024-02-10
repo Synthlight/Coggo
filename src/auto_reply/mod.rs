@@ -1,10 +1,18 @@
 use std::num::NonZeroU64;
+use std::sync::atomic::Ordering;
+use std::sync::RwLock;
 use std::time::Duration;
 
 use async_std::task::sleep;
 use const_format::formatcp;
 use fancy_regex::{Regex, RegexBuilder};
-use serenity::all::{ChannelId, Emoji, MessageId, ReactionType};
+use once_cell::sync::Lazy;
+use serenity::all::{ChannelId, Context, EditMessage, Emoji, Message, MessageId, ReactionType};
+
+use crate::{DEBUG, EMOJI, SPAM_LIST};
+use crate::models::consts::*;
+use crate::util::lib::*;
+use crate::util::macros::*;
 
 // The built-in implementation (derived from re2 I believe) doesn't support it.
 // Doesn't work right with fancy-regex either.
@@ -122,8 +130,7 @@ struct Info<'a> {
     thumbs_down: &'a Emoji,
 }
 
-#[hook]
-async fn auto_reply(ctx: &Context, msg: &Message) {
+pub async fn auto_reply(ctx: &Context, msg: &Message) {
     if !should_run_on_target_server(msg) {
         return;
     }
@@ -375,13 +382,12 @@ async fn get_thumb_reactions<'a>(info: &'a Info<'a>, thumbs_up_reaction: &Reacti
 async fn quarantine_message<'a>(info: &'a Info<'a>, msg: &Message) {
     if DEBUG.load(Ordering::Relaxed) { println!("Quarantining the message."); }
 
-    let guild = msg.guild_id.unwrap();
-    let guild_id = guild;
+    let guild_id = non_zero_u64!(msg.guild_id.unwrap().into());
     let channel_id: NonZeroU64;
 
-    if guild_id.get() == COGGO_TESTING.get() {
+    if guild_id == COGGO_TESTING {
         channel_id = ADMIN_BOT_CHAT_TEST
-    } else if guild_id.get() == VOLCANOIDS.get() {
+    } else if guild_id == VOLCANOIDS {
         channel_id = ADMIN_BOT_CHAT_VOLC
     } else {
         return;
@@ -423,7 +429,7 @@ fn create_auto_reply_regex(individual_lines_to_match: &[String], ignore_quoted_t
 }
 
 #[allow(unused)]
-fn prep_regex() {
+pub fn prep_regex() {
     CONSOLE_AUTO_REPLY_REGEX.read().unwrap();
     STEAM_AUTO_REPLY_REGEX.read().unwrap();
     MULTIPLAYER_AUTO_REPLY_REGEX.read().unwrap();

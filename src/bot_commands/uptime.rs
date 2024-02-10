@@ -1,3 +1,10 @@
+use chrono::Local;
+use serenity::all::{Context, Message};
+use serenity::all::standard::CommandResult;
+use serenity::all::standard::macros::command;
+
+use crate::START_TIME;
+
 #[command]
 async fn uptime(ctx: &Context, msg: &Message) -> CommandResult {
     let time_diff = Local::now() - START_TIME.read().unwrap().clone();

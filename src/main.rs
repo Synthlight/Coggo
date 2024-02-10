@@ -6,29 +6,25 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use async_std::sync::Mutex;
 use chrono::{DateTime, Local};
 use once_cell::sync::Lazy;
+use serenity::all::{Context, EventHandler, GatewayIntents, Message, Ready, ShardManager, StandardFramework};
 use serenity::all::standard::{CommandError, Configuration};
-use serenity::async_trait;
-use serenity::client::{Client, Context, EventHandler};
-use serenity::framework::standard::StandardFramework;
-use serenity::framework::standard::macros::{group, hook};
-use serenity::gateway::ShardManager;
-use serenity::model::gateway::Ready;
-use serenity::prelude::{GatewayIntents, TypeMapKey};
-use crate::models::emoji::CachedEmoji;
-use crate::models::spam_list::SpamList;
+use serenity::all::standard::macros::{group, hook};
+use serenity::{async_trait, Client};
+use serenity::prelude::TypeMapKey;
 
-pub mod macros;
+use crate::auto_reply::*;
+use crate::bot_commands::help::*;
+use crate::bot_commands::no::*;
+use crate::bot_commands::shutdown::*;
+use crate::bot_commands::uptime::*;
+use crate::bot_commands::verify::*;
+use crate::models::emoji::*;
+use crate::models::spam_list::*;
+
+pub mod auto_reply;
+pub mod bot_commands;
 pub mod models;
-
-include!["lib/lib.rs"];
-
-include!["auto_reply/auto_reply.rs"];
-
-include!["bot_commands/help.rs"];
-include!["bot_commands/no.rs"];
-include!["bot_commands/shutdown.rs"];
-include!["bot_commands/uptime.rs"];
-include!["bot_commands/verify.rs"];
+pub mod util;
 
 static DEBUG: AtomicBool = AtomicBool::new(true);
 static START_TIME: Lazy<RwLock<DateTime<Local>>> = Lazy::new(|| RwLock::new(Local::now()));
@@ -68,7 +64,7 @@ async fn main() {
 
     let framework = StandardFramework::new()
         .group(&GENERAL_GROUP)
-        .normal_message(auto_reply)
+        .normal_message(message_hook)
         .after(after_hook);
     framework.configure(Configuration::new()
         .prefix(".")
@@ -98,6 +94,11 @@ async fn ready(ctx: &Context) {
     prep_regex();
 
     println!("Startup complete.");
+}
+
+#[hook]
+pub async fn message_hook(ctx: &Context, msg: &Message) {
+    auto_reply(ctx, msg).await;
 }
 
 #[hook]

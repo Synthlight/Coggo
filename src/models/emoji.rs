@@ -1,6 +1,6 @@
 use std::num::NonZeroU64;
-use serenity::all::{Emoji, EmojiId, GuildId};
-use serenity::client::Context;
+
+use serenity::all::{Context, Emoji, EmojiId, GuildId};
 
 use crate::models::consts::*;
 
