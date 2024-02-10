@@ -34,8 +34,6 @@ include!["models/spam_list.rs"];
 include!["auto_reply/auto_reply.rs"];
 
 include!["bot_commands/help.rs"];
-include!["bot_commands/how_to_paint.rs"];
-include!["bot_commands/new_player_info.rs"];
 include!["bot_commands/no.rs"];
 include!["bot_commands/shutdown.rs"];
 include!["bot_commands/uptime.rs"];
@@ -47,7 +45,7 @@ static EMOJI: Lazy<Arc<Mutex<CachedEmoji>>> = Lazy::new(|| Arc::new(Mutex::new(C
 static SPAM_LIST: Lazy<Arc<Mutex<SpamList>>> = Lazy::new(|| Arc::new(Mutex::new(SpamList::new())));
 
 #[group]
-#[commands(help, how_to_paint, new_player_info, no, shutdown, uptime, verify)]
+#[commands(help, no, shutdown, uptime, verify)]
 struct General;
 
 struct Handler;
