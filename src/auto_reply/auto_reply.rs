@@ -86,7 +86,8 @@ static NITRO_SCAM_HAS_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(creat
 static NITRO_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
     format!(r"https?:\/\/(?:www\.)?discord\.gift"),
     format!(r"https?:\/\/(?:[^\.]+\.)?discordapp\.(?:net|com)"),
-    format!(r"https?:\/\/(?:www\.)?tenor\.com")
+    format!(r"https?:\/\/(?:www\.)?tenor\.com"),
+    format!(r"https?:\/\/(?:www\.)?twitter\.com")
 ], true)));
 
 static LINK_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
@@ -99,6 +100,7 @@ static LINK_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_rep
 static LINK_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
     format!(r"discord\.(?:gg|com)\/vcUsSWP"),
     format!(r"discord\.(?:gg|com)\/invite\/vcUsSWP"),
+    format!(r"discord\.(?:gg|com)\/incidents\/[a-zA-Z0-9]+"),
     format!(r"discord\.(?:gg|com)\/volcanoids"),
     format!(r"discord\.(?:gg|com)\/invite\/volcanoids"),
     format!(r"discord\.(?:gg|com)\/channels")
@@ -120,6 +122,11 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
 
     let guild_id = msg.guild_id.unwrap().0;
     let channel_id = msg.channel_id.0;
+    let user_id = msg.author.id.0;
+
+    if user_id == KEJN && msg.guild_id.unwrap().0 == VOLCANOIDS {
+        return;
+    }
 
     if msg.content == "Is it on console?" && channel_id == SECRET_SECTOR {
         msg.channel_id.say(ctx, "No it is not, stop asking.").await.expect("Error sending message.");
@@ -164,12 +171,18 @@ async fn auto_reply(ctx: &Context, msg: &Message) {
         if is_debug { println!("Checking message for a scam: {}", &msg.content); }
         let mut quarantined = check_for_steam_scam(&msg, &info).await;
         if is_debug && quarantined { println!("Is a steam scam? {}", quarantined); }
-        if !quarantined { quarantined = check_for_nitro_scam(&msg, &info).await; }
-        if is_debug && quarantined { println!("Is a nitro scam? {}", quarantined); }
-        if !quarantined { quarantined = check_for_invite_scam(&msg, &info).await; }
-        if is_debug && quarantined { println!("Is a invite scam? {}", quarantined); }
-        if !quarantined { quarantined = check_for_banned_characters(&msg, &info).await; }
-        if is_debug && quarantined { println!("Is a banned character? {}", quarantined); }
+        if !quarantined {
+            quarantined = check_for_nitro_scam(&msg, &info).await;
+            if is_debug && quarantined { println!("Is a nitro scam? {}", quarantined); }
+        }
+        if !quarantined {
+            quarantined = check_for_invite_scam(&msg, &info).await;
+            if is_debug && quarantined { println!("Is a invite scam? {}", quarantined); }
+        }
+        if !quarantined {
+            quarantined = check_for_banned_characters(&msg, &info).await;
+            if is_debug && quarantined { println!("Is a banned character? {}", quarantined); }
+        }
         if is_debug && !quarantined { println!("Message was not a scam."); }
     }
 }
@@ -215,6 +228,11 @@ async fn check_for_steam_scam<'a>(msg: &Message, info: &'a Info<'a>) -> bool {
 
 async fn check_for_nitro_scam<'a>(msg: &Message, info: &'a Info<'a>) -> bool {
     let mut is_nitro_scam = NITRO_SCAM.read().unwrap().is_match(&msg.content).unwrap();
+    let is_scam_link_whitelisted = LINK_SCAM_IGNORE.read().unwrap().is_match(&msg.content).unwrap();
+
+    if is_scam_link_whitelisted {
+        return false;
+    }
 
     if msg.content.to_lowercase().starts_with("who is first?")
         || msg.content.to_lowercase().starts_with("@everyone") {
@@ -363,7 +381,8 @@ async fn quarantine_message<'a>(info: &'a Info<'a>, msg: &Message) {
 
     msg.delete(info.ctx).await.expect("Error deleting scam message.");
 
-    let mut report = admin_bot_channel.say(info.ctx, format!("Deleted potential scam message in <#{}> by <@{}>\n{}", msg.channel_id, msg.author.id, msg.content)).await.expect("Error reporting scam message.");
+    let string = Regex::new(r"(http\S+)").unwrap().replace_all(&msg.content, "<$1>");
+    let mut report = admin_bot_channel.say(info.ctx, format!("Deleted potential scam message in <#{}> by <@{}>\n{}", msg.channel_id, msg.author.id, string)).await.expect("Error reporting scam message.");
     report.suppress_embeds(info.ctx).await.expect("Error removing embeds.");
 }
 
