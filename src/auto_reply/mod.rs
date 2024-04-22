@@ -85,11 +85,14 @@ static BTLY_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_rep
 
 static NITRO_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
     format!(r"Discord Nitro(?: for)? Free.*Steam Store"),
-    format!(r"discord.*?(?:free|nitro|discord|gift|airdrop)"),
+    format!(r"discord.*?(?:free|nitro|discord|gift|airdrop|gratis)"),
+    format!(r"(?:(?:gratis.*?nitro)|(?:nitro.*?gratis))"),
     format!(r"(?:(?:free.*?nitro)|(?:nitro.*?free))"),
+    format!(r"(?:(?:free.*?onlyfans)|(?:onlyfans.*?free))"),
     format!(r"(?:(?:steam.*?nitro)|(?:nitro.*?steam))"),
     format!(r"(?:(?:gift.*?nitro)|(?:nitro.*?gift))"),
     format!(r"(?:(?:@everyone.*?nitro)|(?:nitro.*?@everyone))"),
+    format!(r"(?:(?:@everyone.*?gratis)|(?:gratis.*?@everyone))"),
     format!(r"(?!discord\.)d[il]{{1,2}}[szckr]{{1,3}}o(?:cl|r[dcle]{{1,2}}|[crd]{{1,3}})n?(?:n[il]tro)?"),
     format!(r"tinyurl\.com\/y2bffk8j"),
     format!(r"take nitro")
@@ -107,7 +110,7 @@ static NITRO_SCAM_IGNORE: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_
 ], true)));
 
 static LINK_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
-    format!(r"discord\.(?:gg|com)\/[a-zA-Z0-9]{{1,12}}[^/](?:\s|$)"),
+    format!(r"discord\.(?:gg|com)\/[a-zA-Z0-9]{{1,15}}[^/](?:\s|$)"),
     format!(r"discord\.(?:gg|com)\/invite\/[a-zA-Z0-9]+"),
     format!(r"direct-link\.net\/[0-9]+\/"),
     format!(r"https?:\/\/t.me\/")

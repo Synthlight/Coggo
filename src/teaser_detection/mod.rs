@@ -7,6 +7,8 @@ use crate::util::lib::*;
 use crate::util::macros::*;
 
 pub async fn teaser_detection(ctx: &Context, msg: &Message) {
+    if true { return; }
+
     if !should_run_on_target_server(msg) {
         return;
     }
