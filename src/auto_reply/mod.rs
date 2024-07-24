@@ -95,7 +95,8 @@ static NITRO_SCAM: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_re
     format!(r"(?:(?:@everyone.*?gratis)|(?:gratis.*?@everyone))"),
     format!(r"(?!discord\.)d[il]{{1,2}}[szckr]{{1,3}}o(?:cl|r[dcle]{{1,2}}|[crd]{{1,3}})n?(?:n[il]tro)?"),
     format!(r"tinyurl\.com\/y2bffk8j"),
-    format!(r"take nitro")
+    format!(r"take nitro"),
+    format!(r"opensea")
 ], true)));
 
 static NITRO_SCAM_HAS_LINK: Lazy<RwLock<Regex>> = Lazy::new(|| RwLock::new(create_auto_reply_regex(&[
