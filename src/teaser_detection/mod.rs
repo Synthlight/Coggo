@@ -31,7 +31,7 @@ pub async fn teaser_detection(ctx: &Context, msg: &Message) {
     let report_channel = ChannelId::from(report_channel_id);
     let msg_contents = msg.content.to_lowercase();
 
-    if msg_contents.contains("cup") || msg_contents.contains("mug") {
-        report_channel.say(ctx, format!("Found message that matches cup/mug in <#{}> by <@{}>\n{}\n{}", channel_id.get(), user_id.get(), msg.link(), msg_contents)).await.expect("Error sending message.");
+    if msg_contents.contains("boss") || msg_contents.contains("arena") {
+        report_channel.say(ctx, format!("Found message that matches boss/arena in <#{}> by <@{}>\n{}\n{}", channel_id.get(), user_id.get(), msg.link(), msg_contents)).await.expect("Error sending message.");
     }
 }
