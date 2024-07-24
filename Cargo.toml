@@ -8,12 +8,18 @@ edition = "2018"
 
 [dependencies]
 async-std = { version = "1.12.0" }
-chrono = { version = "0.4.33" }
+chrono = { version = "0.4.38" }
 const_format = { version = "0.2.32" }
 fancy-regex = { version = "0.13.0" }
 once_cell = { version = "1.19.0" }
-regex = { version = "1.10.3" }
-reqwest = { version = "0.11.24" }
-serde_json = { version = "1.0.113" }
-serenity = { version = "0.12.0", features = ["collector"] }
-tokio = { version = "1.36.0", features = ["macros", "rt-multi-thread"] }
+regex = { version = "1.10.5" }
+reqwest = { version = "0.12.5" }
+
+# Dependency from `tokio`. Avoids this error:
+# unsafe precondition(s) violated: slice::from_raw_parts requires the pointer to be aligned and non-null, and the total size of the slice not to exceed `isize::MAX`
+# https://github.com/steffengy/schannel-rs/issues/106
+schannel = { version = "0.1.23" }
+
+serde_json = { version = "1.0.120" }
+serenity = { version = "0.12.2", features = ["collector"] }
+tokio = { version = "1.39.1", features = ["macros", "rt-multi-thread"] }
